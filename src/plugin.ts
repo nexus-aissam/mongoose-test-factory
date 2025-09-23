@@ -4,14 +4,19 @@
  * This file contains the main plugin classes and functions.
  */
 
-import { Schema, Model } from "mongoose";
+import mongoose, { Schema, Model, Document } from "mongoose";
 import {
   PluginOptions,
   PluginManager,
   PluginState,
   PluginHooks,
 } from "./types/plugin";
-import { BaseDocument, FactoryBuilder, FactoryError } from "./types/common";
+import {
+  BaseDocument,
+  FactoryBuilder,
+  FactoryError,
+  ModelWithFactory,
+} from "./types/common";
 import { FactoryConfig } from "./types/common";
 import { createFactory, FactoryHelpers } from "./factory";
 import { globalGeneratorRegistry } from "./generators/registry";
@@ -210,9 +215,7 @@ class PluginManagerImpl implements PluginManager {
     schema.method("factory", function <
       T extends BaseDocument
     >(this: T, count?: number): FactoryBuilder<T> {
-      return (this.constructor as any).factory(
-        count
-      );
+      return (this.constructor as any).factory(count);
     });
 
     console.debug(`[mongoose-test-factory] Added factory method to schema`);
@@ -305,10 +308,54 @@ class PluginManagerImpl implements PluginManager {
 export const pluginManager = new PluginManagerImpl();
 
 /**
- * Main plugin function
+ * Main plugin function that adds factory capabilities to a Mongoose schema
  *
- * @param schema - Mongoose schema to apply plugin to
- * @param options - Plugin options
+ * This function should be applied to your Mongoose schema using the `schema.plugin()` method.
+ * It automatically adds a static `factory()` method to your model for generating test data.
+ *
+ * @param schema - The Mongoose schema to enhance with factory capabilities
+ * @param options - Configuration options for the factory plugin
+ * @param options.seed - Seed for reproducible data generation
+ * @param options.locale - Locale for internationalized data (e.g., 'en_US', 'fr', 'ja')
+ * @param options.debug - Enable debug logging for troubleshooting
+ * @param options.factory - Factory-specific configuration options
+ * @param options.performance - Performance optimization settings
+ *
+ * @example
+ * ```typescript
+ * import mongoose, { Schema } from 'mongoose';
+ * import mongooseTestFactory from 'mongoose-test-factory';
+ *
+ * // Define your schema
+ * const userSchema = new Schema({
+ *   name: { type: String, required: true },
+ *   email: { type: String, required: true, unique: true },
+ *   age: { type: Number, min: 18 }
+ * });
+ *
+ * // Apply the factory plugin
+ * userSchema.plugin(mongooseTestFactory);
+ *
+ * // Create your model
+ * const User = mongoose.model('User', userSchema);
+ *
+ * // Now you can use the factory method
+ * const user = User.factory().build();
+ * const users = await User.factory(10).create();
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With custom options
+ * userSchema.plugin(mongooseTestFactory, {
+ *   seed: 12345,
+ *   locale: 'en_US',
+ *   debug: true,
+ *   factory: {
+ *     defaultBatchSize: 50
+ *   }
+ * });
+ * ```
  */
 export function mongooseTestFactory(
   schema: Schema,
@@ -329,81 +376,219 @@ export function mongooseTestFactory(
 }
 
 /**
- * Factory plugin utilities
+ * Factory plugin utilities for global configuration and management
+ *
+ * @example
+ * ```typescript
+ * import { FactoryPlugin } from 'mongoose-test-factory';
+ *
+ * // Configure globally
+ * await FactoryPlugin.initialize({
+ *   seed: 12345,
+ *   locale: 'en_US',
+ *   debug: true
+ * });
+ * ```
  */
 export const FactoryPlugin = {
   /**
-   * Initialize the plugin with global options
+   * Initialize the plugin with global configuration options
+   *
+   * @param options - Plugin configuration options
+   * @param options.seed - Seed for reproducible data generation
+   * @param options.locale - Locale for faker.js data generation (e.g., 'en_US', 'es', 'fr')
+   * @param options.debug - Enable debug logging
+   * @param options.factory - Factory-specific configuration
+   * @param options.factory.defaultBatchSize - Default batch size for bulk operations
+   * @param options.performance - Performance optimization settings
+   * @returns Promise that resolves when initialization is complete
+   *
+   * @example
+   * ```typescript
+   * // Basic initialization
+   * await FactoryPlugin.initialize();
+   *
+   * // With configuration
+   * await FactoryPlugin.initialize({
+   *   seed: 12345,
+   *   locale: 'en_US',
+   *   factory: {
+   *     defaultBatchSize: 50
+   *   }
+   * });
+   * ```
    */
   async initialize(options: PluginOptions = {}): Promise<void> {
     await pluginManager.initialize(options);
   },
 
   /**
-   * Get plugin state
+   * Get the current plugin state and configuration
+   *
+   * @returns Current plugin state including schemas, factories, and metrics
+   *
+   * @example
+   * ```typescript
+   * const state = FactoryPlugin.getState();
+   * console.log('Initialized:', state.initialized);
+   * console.log('Registered schemas:', state.schemas.size);
+   * ```
    */
   getState(): PluginState {
     return pluginManager.getState();
   },
 
   /**
-   * Reset plugin state
+   * Reset the plugin state, clearing all registered schemas and factories
+   *
+   * @example
+   * ```typescript
+   * // Clear all plugin state
+   * FactoryPlugin.reset();
+   * ```
    */
   reset(): void {
     pluginManager.reset();
   },
 
   /**
-   * Disable plugin
+   * Disable the plugin, stopping all factory operations
+   *
+   * @returns Promise that resolves when plugin is disabled
+   *
+   * @example
+   * ```typescript
+   * await FactoryPlugin.disable();
+   * ```
    */
   async disable(): Promise<void> {
     await pluginManager.disable();
   },
 
   /**
-   * Enable plugin
+   * Enable the plugin if it was previously disabled
+   *
+   * @returns Promise that resolves when plugin is enabled
+   *
+   * @example
+   * ```typescript
+   * await FactoryPlugin.enable();
+   * ```
    */
   async enable(): Promise<void> {
     await pluginManager.enable();
   },
 
   /**
-   * Check if plugin is enabled
+   * Check if the plugin is currently enabled and operational
+   *
+   * @returns True if plugin is enabled, false otherwise
+   *
+   * @example
+   * ```typescript
+   * if (FactoryPlugin.isEnabled()) {
+   *   console.log('Plugin is ready to use');
+   * }
+   * ```
    */
   isEnabled(): boolean {
     return pluginManager.isEnabled();
   },
 
   /**
-   * Register hooks
+   * Register lifecycle hooks for the plugin
+   *
+   * @param hooks - Object containing hook functions
+   * @param hooks.onPluginInitialized - Called when plugin is initialized
+   * @param hooks.onSchemaApplied - Called when plugin is applied to a schema
+   * @param hooks.onFactoryCreated - Called when a factory is created
+   * @param hooks.onError - Called when an error occurs
+   *
+   * @example
+   * ```typescript
+   * FactoryPlugin.registerHooks({
+   *   onFactoryCreated: (factory, modelName) => {
+   *     console.log(`Factory created for ${modelName}`);
+   *   },
+   *   onError: (error, context) => {
+   *     console.error('Factory error:', error.message);
+   *   }
+   * });
+   * ```
    */
   registerHooks(hooks: Partial<PluginHooks>): void {
     pluginManager.registerHooks(hooks);
   },
 
   /**
-   * Get performance metrics
+   * Get performance metrics and statistics from the plugin
+   *
+   * @returns Object containing performance metrics like generation times, cache hits, etc.
+   *
+   * @example
+   * ```typescript
+   * const metrics = FactoryPlugin.getMetrics();
+   * console.log('Average generation time:', metrics.avgGenerationTime);
+   * console.log('Total documents created:', metrics.totalCreated);
+   * ```
    */
   getMetrics(): Record<string, any> {
     return pluginManager.getMetrics();
   },
 
   /**
-   * Update configuration
+   * Update the plugin configuration at runtime
+   *
+   * @param config - Partial configuration object to merge with existing config
+   *
+   * @example
+   * ```typescript
+   * // Update batch size for better performance
+   * FactoryPlugin.updateConfig({
+   *   factory: { defaultBatchSize: 200 }
+   * });
+   *
+   * // Enable debug mode
+   * FactoryPlugin.updateConfig({ debug: true });
+   * ```
    */
   updateConfig(config: Partial<PluginOptions>): void {
     pluginManager.updateConfig(config);
   },
 
   /**
-   * Set faker locale
+   * Set the locale for faker.js data generation
+   *
+   * @param locale - Locale string (e.g., 'en_US', 'es', 'fr', 'de', 'ja')
+   *
+   * @example
+   * ```typescript
+   * // Generate French names and addresses
+   * FactoryPlugin.setLocale('fr');
+   *
+   * // Generate Japanese data
+   * FactoryPlugin.setLocale('ja');
+   * ```
    */
   setLocale(locale: string): void {
     pluginManager.updateConfig({ locale });
   },
 
   /**
-   * Set seed for reproducible data
+   * Set a seed for reproducible data generation
+   *
+   * @param seed - Numeric seed value for faker.js
+   *
+   * @example
+   * ```typescript
+   * // Make tests deterministic
+   * FactoryPlugin.setSeed(12345);
+   *
+   * // Now all generated data will be consistent across runs
+   * const user1 = User.factory().build();
+   * const user2 = User.factory().build();
+   * // user1 and user2 will have the same data every time
+   * ```
    */
   setSeed(seed: number): void {
     pluginManager.updateConfig({ seed });
@@ -411,13 +596,76 @@ export const FactoryPlugin = {
 };
 
 /**
- * Type-safe model factory creation
+ * Create a type-safe factory method for a specific Mongoose model
+ *
+ * @template T - The document type extending BaseDocument
+ * @param model - The Mongoose model to create a factory for
+ * @param config - Optional factory configuration including traits, defaults, and hooks
+ * @returns Factory method function that accepts an optional count parameter
+ *
+ * @example
+ * ```typescript
+ * import { createModelFactory } from 'mongoose-test-factory';
+ *
+ * // Create a factory with custom configuration
+ * const userFactory = createModelFactory(User, {
+ *   defaults: { isActive: true },
+ *   traits: {
+ *     admin: (builder) => builder.with({ role: 'admin' }),
+ *     verified: (builder) => builder.with({ emailVerified: true })
+ *   }
+ * });
+ *
+ * // Use the factory
+ * const user = userFactory().build();
+ * const users = userFactory(5).create();
+ * ```
  */
 export function createModelFactory<T extends BaseDocument>(
   model: Model<T>,
   config?: FactoryConfig<T>
 ): (count?: number) => FactoryBuilder<T> {
   return FactoryHelpers.createFactoryMethod(model, config);
+}
+
+/**
+ * Type-safe utility to augment a Mongoose model with factory capabilities
+ *
+ * This function takes a Mongoose model and returns the same model type
+ * augmented with the `factory()` method for generating test data.
+ *
+ * @template T - The document type extending Document
+ * @param model - The Mongoose model to augment
+ * @returns The same model type with factory capabilities
+ *
+ * @example
+ * ```typescript
+ * import mongoose, { Schema, Document } from 'mongoose';
+ * import { withFactory } from 'mongoose-test-factory';
+ *
+ * interface IUser extends Document {
+ *   name: string;
+ *   email: string;
+ * }
+ *
+ * const userSchema = new Schema<IUser>({
+ *   name: { type: String, required: true },
+ *   email: { type: String, required: true, unique: true }
+ * });
+ *
+ * userSchema.plugin(mongooseTestFactory);
+ *
+ * const UserModel = mongoose.model<IUser>('User', userSchema);
+ * const User = withFactory(UserModel);
+ * // Now User has the factory() method with full type safety
+ * const user = User.factory().build();
+ * const users = await User.factory(10).create();
+ * ```
+ */
+export function withFactory<T extends Document>(
+  model: mongoose.Model<T>
+): ModelWithFactory<T> {
+  return model as ModelWithFactory<T>;
 }
 
 /**

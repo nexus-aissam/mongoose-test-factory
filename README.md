@@ -1,324 +1,913 @@
-# Mongoose Test Factory
+# Mongoose Test Factory 🏭
 
 [![NPM Version](https://img.shields.io/npm/v/mongoose-test-factory.svg)](https://www.npmjs.com/package/mongoose-test-factory)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/nexus-aissam/mongoose-test-factory)
 
-**Mongoose Test Factory** is a powerful and intuitive data generation tool for Mongoose. It completely eliminates the hassle of manually creating mock data for your tests, database seeding, or application prototypes.
+**The most intelligent and powerful test data generator for Mongoose.** Generate realistic, valid, and contextually-aware test data with zero configuration. Stop writing tedious mock objects and start building meaningful test data in seconds.
 
-By intelligently analyzing your Mongoose schemas, it generates realistic, valid, and context-aware data with an elegant, fluent API. Stop writing tedious mock objects and start building meaningful test data in seconds.
+## ✨ Why Choose Mongoose Test Factory?
 
-## Core Philosophy
+### 🚀 **Zero Configuration Magic**
 
-Testing and development should be fast and efficient. Manually creating test data is slow, error-prone, and doesn't scale. This factory is built on a simple philosophy: **your schema definition is the ultimate source of truth, and it should be all you need to generate perfect test data.**
+- **Instant Setup**: Apply one plugin and immediately get intelligent data generation
+- **Schema-Aware**: Automatically respects all your Mongoose validators, types, and constraints
+- **Semantic Intelligence**: Recognizes field names like `email`, `phoneNumber`, `firstName` and generates appropriate realistic data
 
-`mongoose-test-factory` bridges the gap between your schema and your testing needs, letting you focus on writing great code instead of mocking data.
+### 🧠 **Intelligent by Design**
 
-## Key Features
+- **Deep Schema Analysis**: Understands complex nested schemas, arrays, and subdocuments
+- **Context-Aware Generation**: Field names determine data type (e.g., `userEmail` generates emails, `firstName` generates names)
+- **Validation Compliant**: Honors `required`, `min`, `max`, `enum`, `unique`, and custom validators
 
-- ✅ **Deep Schema Introspection:** Automatically understands your schema's types, validators (`required`, `min`, `max`, `enum`, etc.), and default values.
-- 🧠 **Intelligent Semantic Analysis:** Recognizes field names like `email`, `name`, `password`, or `productPrice` to generate contextually relevant data using [`@faker-js/faker`](https://fakerjs.dev/).
-- ⛓️ **Elegant Fluent API:** A clean, chainable, and highly readable API makes defining data variations effortless.
-- 🚀 **Multiple Generation Strategies:**
-  - `build()`: Creates lightweight, plain JavaScript objects.
-  - `make()`: Creates unsaved Mongoose document instances.
-  - `create()`: Creates and saves Mongoose documents directly to your database.
-- 🔧 **Fully Customizable:** Easily override any generated field with your own specific data.
-- 🌐 **Global Configuration:** Set a global seed for reproducible data, configure locales for international data, and more.
-- 🤝 **Relationship Management:** Effortlessly create and link related documents.
-- 🔷 **First-Class TypeScript Support:** Written in TypeScript for robust type safety and excellent autocompletion.
+### ⚡ **Three Generation Strategies**
 
-## How It Works
+- **`build()`**: Lightning-fast plain JavaScript objects for unit tests
+- **`make()`**: Mongoose instances with virtuals and methods for testing models
+- **`create()`**: Fully persisted documents for integration tests
 
-The factory follows a sophisticated, multi-step process to generate the highest quality data for your models:
+### 🔧 **Production-Ready Features**
 
-1. **Plugin Integration**: First, you apply the factory as a plugin to your Mongoose schema. This seamlessly injects a static `.factory()` method into your model, making it accessible everywhere.
-2. **Schema Analysis**: When you invoke `YourModel.factory()`, the plugin performs a deep analysis of your schema. It maps out all fields, their data types, validation rules (like `required`, `min`, `max`, `enum`), and default values.
-3. **Semantic Recognition**: This is the "magic" step. The analyzer examines the **name** of each field (e.g., `userEmail`, `lastName`, `avatarUrl`). It uses a powerful pattern-recognition engine to understand the *semantic meaning* of the field, going far beyond just its data type.
-4. **Intelligent Data Generation**: For each field, the factory selects the best generator. If it recognized a semantic meaning, it uses a specialized generator (e.g., `faker.internet.email()` for an `email` field). If not, it falls back to a generator appropriate for the field's data type, always respecting the validation rules.
-5. **Applying Overrides**: Any custom data you provide using the `.with()` method is applied at the end of the process, giving you the final say on the generated object's shape.
-6. **Final Output**: The factory delivers the data in the precise format you requested—whether it's a plain `object` (`build`), a Mongoose instance (`make`), or a database-saved document (`create`).
+- **TypeScript First**: Full type safety with intelligent autocompletion
+- **Relationship Management**: Automatic ObjectId generation and linking
+- **Global Configuration**: Set seeds for reproducible tests across teams
+- **Performance Optimized**: Batch operations, caching, and memory management
+- **Extensible**: Custom generators, traits, and hooks for any use case
 
-## Installation
+---
 
-Install the package and its peer dependencies using your favorite package manager.
-
-### pnpm
+## 📦 Installation
 
 ```bash
-pnpm add --save-dev mongoose-test-factory @faker-js/faker mongoose
+# npm
+npm install --save-dev mongoose-test-factory
+
+# yarn
+yarn add --dev mongoose-test-factory
+
+# pnpm
+pnpm add --save-dev mongoose-test-factory
 ```
 
-### npm
+> **Note**: `mongoose` is a peer dependency and must be installed in your project.
 
-```bash
-npm install --save-dev mongoose-test-factory @faker-js/faker mongoose
-```
+---
 
-### yarn
-
-```bash
-yarn add --dev mongoose-test-factory @faker-js/faker mongoose
-```
-
-> **Note:** `mongoose` and `@faker-js/faker` are required peer dependencies and must be installed in your project.
-
-## Getting Started: A 5-Minute Guide
-
-Let's see how easy it is to get up and running.
+## 🚀 Quick Start (30 seconds)
 
 ```typescript
-import mongoose, { Schema, Model } from 'mongoose';
-import mongooseTestFactory from 'mongoose-test-factory';
+import mongoose, { Schema, Document } from 'mongoose';
+import mongooseTestFactory, { withFactory } from 'mongoose-test-factory';
 
-// 1. Define your Mongoose interface and schema
-interface User extends mongoose.Document {
+// 1. Define your interface and schema
+interface IUser extends Document {
   name: string;
   email: string;
   age: number;
   isActive: boolean;
 }
 
-const userSchema = new Schema({
+const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  age: { type: Number, min: 18 },
-  isActive: { type: Boolean, default: true },
+  age: { type: Number, min: 18, max: 120 },
+  isActive: { type: Boolean, default: true }
 });
 
-// 2. Apply the plugin to your schema
+// 2. Apply the plugin
 userSchema.plugin(mongooseTestFactory);
 
-// 3. Create your Mongoose model
-const User = mongoose.model<User>('User', userSchema);
+// 3. Create your model with factory support
+const UserModel = mongoose.model<IUser>('User', userSchema);
+const User = withFactory(UserModel); // For full TypeScript support
 
-// 4. That's it! You're ready to generate data.
+// 4. Generate data instantly! 🎉
+const user = User.factory().build();
+console.log(user);
+// Output: {
+//   name: "John Doe",
+//   email: "john.doe@example.com",
+//   age: 28,
+//   isActive: true
+// }
+```
 
-async function run() {
-  // Generate a single plain object with realistic, valid data
-  const userObject = User.factory().build();
-  console.log('Built Object:', userObject);
-  // -> { name: 'Eleanore Glover', email: 'glover.eleanore@example.com', age: 42, isActive: true }
+---
 
-  // Generate and save 5 users directly to the database
-  const savedUsers = await User.factory(5).create();
-  console.log('Saved Users:', savedUsers.length); // -> 5
+## 🏗️ How It Works Under the Hood
 
-  // Generate a specific user by overriding generated values
-  const adminUser = await User.factory()
-    .with({ name: 'Admin User', age: 99 })
-    .create();
-  console.log('Admin User:', adminUser.name, adminUser.age); // -> 'Admin User' 99
+### 1. **Plugin Integration & Schema Registration**
+
+When you apply `mongooseTestFactory` to your schema, the plugin:
+
+- Registers the schema in the global factory registry
+- Injects a static `factory()` method into your model
+- Performs deep analysis of field types, validators, and constraints
+
+### 2. **Intelligent Field Analysis**
+
+The factory analyzes each field in your schema:
+
+```typescript
+{
+  email: { type: String, required: true, unique: true },
+  //   ↓
+  // Detected: String type + "email" name pattern + unique constraint
+  // Generator: faker.internet.email() with uniqueness tracking
 }
 ```
 
-## Detailed Usage Guide
+### 3. **Semantic Pattern Recognition**
 
-### Global Configuration (`FactoryPlugin`)
+Built-in field name patterns automatically generate appropriate data:
 
-For a consistent testing environment, you can set global configurations once in your test setup file (e.g., `jest.setup.ts`).
+- `email`, `userEmail`, `contactEmail` → realistic email addresses
+- `firstName`, `lastName`, `fullName` → person names
+- `phoneNumber`, `mobile`, `phone` → phone numbers
+- `price`, `cost`, `amount` → monetary values
+- `createdAt`, `updatedAt` → timestamps
+
+### 4. **Three-Tier Generation Strategy**
 
 ```typescript
-import { FactoryPlugin } from 'mongoose-test-factory';
+// Plain objects (fastest)
+const data = User.factory().build();
 
-FactoryPlugin.configure({
-  /**
-   * By setting a seed, you ensure that @faker-js/faker generates the same
-   * sequence of data every time your tests run. This makes tests
-   * deterministic and prevents random failures.
-   */
-  seed: 1337,
-  
-  /**
-   * Set a default locale for internationalized data (e.g., names, addresses).
-   * Supports any locale supported by Faker.js.
-   */
-  locale: 'en_US',
+// Mongoose instances (with methods/virtuals)
+const instance = User.factory().make();
 
-  /**
-   * Set to true to see detailed logs from the factory during its
-   * analysis and generation process. Useful for debugging.
-   */
-  debug: false,
-
-  factory: {
-    /**
-     * When using .create() for multiple documents, they are inserted in batches.
-     * This sets the default size for those batches.
-     */
-    defaultBatchSize: 100,
-  }
-});
+// Persisted documents (database saved)
+const saved = await User.factory().create();
 ```
 
-### Generation Strategies: `build`, `make`, and `create`
+---
 
-The factory offers three distinct ways to generate data, each with a specific use case.
+## 📚 Comprehensive Examples
 
-#### `build()` -> Plain JavaScript Object
+### Basic Usage Examples
 
-- **What it does:** Generates a plain, raw JavaScript object. It does **not** create a Mongoose document instance.
-- **When to use it:** Perfect for **unit tests** where you need simple data objects to pass to functions. It's the fastest method as it doesn't involve Mongoose's overhead or database calls.
-- **Output:** `{ name: '...', email: '...' }`
+#### **Single Document Generation**
 
 ```typescript
-// Build a single user object
+// Generate one user
 const user = User.factory().build();
 
-// Build an array of 3 user objects
-const users = User.factory(3).build();
-```
-
-#### `make()` -> Unsaved Mongoose Instance
-
-- **What it does:** Creates a `new User()` instance of your Mongoose model. The instance is **not** saved to the database.
-- **When to use it:** Ideal for testing your Mongoose **instance methods** or virtuals without needing to perform a database write.
-- **Output:** A Mongoose document instance with `isNew: true`.
-
-```typescript
-const userInstance = User.factory().make();
-
-console.log(userInstance instanceof User); // -> true
-console.log(userInstance.isNew); // -> true
-// You can now test instance methods, e.g., userInstance.generateAuthToken()
-```
-
-#### `create()` -> Saved Mongoose Document
-
-- **What it does:** Creates a Mongoose document and saves it to the database. This is an `async` operation.
-- **When to use it:** Essential for **integration tests** where your logic needs to query the database to find and interact with the data.
-- **Output:** A resolved `Promise` containing a saved Mongoose document with `isNew: false`.
-
-```typescript
-// Create and save a single user
-const savedUser = await User.factory().create();
-
-// Create and save 10 users efficiently in batches
-const savedUsers = await User.factory(10).create();
-```
-
-### Overriding Attributes with `.with()`
-
-The `.with()` method is your tool for precise control over the generated data.
-
-```typescript
-// Override a single attribute
-const ceo = User.factory()
-  .with('name', 'The Big Boss')
+// Generate one user with overrides
+const admin = User.factory()
+  .with({ name: 'Admin User', role: 'admin' })
   .build();
 
-// Override multiple attributes at once by passing an object
-const customUser = User.factory()
+// Generate and save to database
+const savedUser = await User.factory().create();
+```
+
+#### **Multiple Document Generation**
+
+```typescript
+// Generate 10 users
+const users = User.factory(10).build();
+
+// Alternative syntax
+const users = User.factory().count(10).build();
+
+// Generate and save 50 users to database
+const savedUsers = await User.factory(50).create();
+```
+
+#### **Field Overrides**
+
+```typescript
+// Override single field
+const user = User.factory()
+  .with('email', 'specific@example.com')
+  .build();
+
+// Override multiple fields
+const user = User.factory()
   .with({
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    age: 42,
+    name: 'John Smith',
+    age: 30,
+    isActive: false
   })
   .build();
 
-// Override nested document attributes
-const userWithBio = User.factory()
+// Nested field overrides
+const user = User.factory()
   .with({
     profile: {
-      bio: 'An expert in Mongoose data generation.',
-      avatar: 'https://i.pravatar.cc/150'
+      bio: 'Software engineer',
+      preferences: { theme: 'dark' }
     }
   })
   .build();
 ```
 
-### Working with Relationships
+### Relationship Examples
 
-To create related documents, the pattern is simple: create the primary document first, then use its `_id` when creating the dependent documents.
+#### **One-to-Many Relationships**
 
 ```typescript
-// Assume a Post model with `author: { type: Schema.Types.ObjectId, ref: 'User' }`
+// User has many Posts
+interface IPost extends Document {
+  title: string;
+  content: string;
+  author: Types.ObjectId;
+  tags: string[];
+}
 
-// 1. Create the primary document (the author)
+const postSchema = new Schema<IPost>({
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  tags: [{ type: String }]
+});
+
+postSchema.plugin(mongooseTestFactory);
+const Post = withFactory(mongoose.model<IPost>('Post', postSchema));
+
+// Create user and related posts
 const author = await User.factory().create();
 
-// 2. Create the dependent documents (the posts) and link them
-const posts = await Post.factory(3)
-  .with('author', author._id) // Pass the author's ObjectId
+const posts = await Post.factory(5)
+  .with({ author: author._id })
   .create();
 
-// Verification
-console.log(posts[0].author.toString() === author._id.toString()); // -> true
+// Verify relationship
+console.log(posts[0].author.toString() === author._id.toString()); // true
 ```
 
-### The Magic: Intelligent Semantic Generation
+#### **Many-to-Many Relationships**
 
-`mongoose-test-factory` automatically generates realistic data for fields with common names. You get sensible data out-of-the-box with zero extra configuration.
+```typescript
+// User belongs to many Teams, Team has many Users
+interface ITeam extends Document {
+  name: string;
+  members: Types.ObjectId[];
+  createdBy: Types.ObjectId;
+}
 
-| Field Name Pattern Contains... | Generated Data Example | Faker.js Method Used |
-| :--- | :--- | :--- |
-| `name`, `title`, `fullName` | "Eleanore Glover" | `faker.person.fullName` |
-| `firstName` | "John" | `faker.person.firstName` |
-| `email` | "<tavares.forrest@example.org>" | `faker.internet.email` |
-| `password`, `pwd` | "s7@D_9!aB" | `faker.internet.password` |
-| `username` | "john.doe23" | `faker.internet.userName` |
-| `slug` | "a-perfectly-formed-slug" | `faker.helpers.slugify` |
-| `age` | `42` | `faker.number.int` (realistic range) |
-| `website`, `url`, `link` | "<https://fakerjs.dev>" | `faker.internet.url` |
-| `avatar`, `imageUrl` | "<https://avatars.fakerjs.dev/>..." | `faker.image.avatar` |
-| `city`, `state`, `country` | "New York", "California", "USA" | `faker.location.*` |
-| `price`, `cost`, `amount` | `199.99` | `faker.commerce.price` |
-| `description`, `content`, `bio` | "A paragraph of lorem ipsum..." | `faker.lorem.paragraph` |
-| `createdAt`, `updatedAt` | A recent past `Date` object | `faker.date.recent` |
-| `birthDate`, `dob` | A `Date` for an 18-80 year old | `faker.date.birthdate` |
-| `expiresAt`, `dueDate` | A future `Date` object | `faker.date.future` |
-| `uuid`, `guid` | "123e4567-e89b-12d3-a456-426614174000" | `faker.string.uuid` |
-| `company`, `organization` | "Tech Solutions Inc." | `faker.company.name` |
-| `productName` | "Awesome Steel Keyboard" | `faker.commerce.productName` |
-| `category` | "Electronics" | `faker.commerce.department` |
+const teamSchema = new Schema<ITeam>({
+  name: { type: String, required: true },
+  members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+});
 
-...and many more!
+teamSchema.plugin(mongooseTestFactory);
+const Team = withFactory(mongoose.model<ITeam>('Team', teamSchema));
 
-## API Reference
+// Create team with members
+const users = await User.factory(5).create();
+const creator = users[0];
+const members = users.slice(1);
 
-### Main Factory Method
+const team = await Team.factory()
+  .with({
+    createdBy: creator._id,
+    members: members.map(u => u._id)
+  })
+  .create();
+```
 
-- **`YourModel.factory(count?: number): FactoryBuilder`**
-  - The entry point for the factory, attached to your Mongoose model.
-  - `count` (optional): The number of documents to generate. Defaults to `1`.
+### Complex Schema Examples
 
-### `FactoryBuilder` Instance Methods
+#### **E-commerce Product Schema**
 
-- **`.count(num: number): this`**
-  - Sets the number of documents to generate.
-- **`.with(field: string, value: any): this`**
-  - Overrides a single field with a specific value.
-- **`.with(overrides: object): this`**
-  - Merges an object of key-value pairs to override multiple fields.
-- **`.build(): T | T[]`**
-  - Generates and returns plain JavaScript object(s).
-- **`.make(): T | T[]`**
-  - Generates and returns new, unsaved Mongoose document instance(s).
-- **`.create(): Promise<T | T[]>`**
-  - Generates, saves to the database, and returns Mongoose document(s).
+```typescript
+interface IProduct extends Document {
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  inStock: boolean;
+  inventory: {
+    quantity: number;
+    warehouse: string;
+    lastRestocked: Date;
+  };
+  reviews: Array<{
+    userId: Types.ObjectId;
+    rating: number;
+    comment: string;
+    createdAt: Date;
+  }>;
+  tags: string[];
+  images: string[];
+  vendor: Types.ObjectId;
+}
 
-### `FactoryPlugin` Global Object
+const productSchema = new Schema<IProduct>({
+  name: { type: String, required: true, maxlength: 100 },
+  description: { type: String, required: true, maxlength: 1000 },
+  price: { type: Number, required: true, min: 0.01, max: 99999.99 },
+  category: {
+    type: String,
+    required: true,
+    enum: ['Electronics', 'Clothing', 'Books', 'Home', 'Sports']
+  },
+  inStock: { type: Boolean, default: true },
+  inventory: {
+    quantity: { type: Number, required: true, min: 0 },
+    warehouse: { type: String, required: true },
+    lastRestocked: { type: Date, default: Date.now }
+  },
+  reviews: [{
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, maxlength: 500 },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  tags: [{ type: String }],
+  images: [{ type: String }], // URLs
+  vendor: { type: Schema.Types.ObjectId, ref: 'Vendor', required: true }
+});
 
-- **`.configure(options: PluginOptions): void`**
-  - Sets the global configuration for all factories.
-- **`.setLocale(locale: string): void`**
-  - Shortcut to configure the Faker.js locale.
-- **`.setSeed(seed: number): void`**
-  - Shortcut to configure the Faker.js seed for deterministic results.
-- **`.getMetrics(): Record<string, any>`**
-  - Returns performance metrics about the generation process.
+productSchema.plugin(mongooseTestFactory);
+const Product = withFactory(mongoose.model<IProduct>('Product', productSchema));
 
-## Contributing
+// Generate realistic products
+const products = Product.factory(10).build();
+// Automatically generates:
+// - Product names like "Wireless Bluetooth Headphones"
+// - Realistic prices within constraints
+// - Valid enum categories
+// - Proper inventory data
+// - Image URLs
+// - ObjectId references
+```
 
-We welcome contributions of all kinds! If you have a feature idea, a bug to report, or want to improve the documentation, please open an issue or submit a pull request.
+#### **User Profile with Nested Data**
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/my-new-feature`).
-3. Commit your changes (`git commit -am 'Add some feature'`).
-4. Push to the branch (`git push origin feature/my-new-feature`).
-5. Create a new Pull Request.
+```typescript
+interface IUserProfile extends Document {
+  personalInfo: {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date;
+    gender: 'male' | 'female' | 'other';
+  };
+  contactInfo: {
+    email: string;
+    phoneNumber: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+    };
+  };
+  preferences: {
+    language: string;
+    timezone: string;
+    notifications: {
+      email: boolean;
+      sms: boolean;
+      push: boolean;
+    };
+  };
+  socialMedia: {
+    twitter?: string;
+    linkedin?: string;
+    github?: string;
+  };
+  metadata: {
+    createdAt: Date;
+    lastLoginAt: Date;
+    loginCount: number;
+    isVerified: boolean;
+  };
+}
 
-## License
+const userProfileSchema = new Schema<IUserProfile>({
+  personalInfo: {
+    firstName: { type: String, required: true, maxlength: 50 },
+    lastName: { type: String, required: true, maxlength: 50 },
+    dateOfBirth: { type: Date, required: true },
+    gender: { type: String, enum: ['male', 'female', 'other'], required: true }
+  },
+  contactInfo: {
+    email: { type: String, required: true, unique: true },
+    phoneNumber: { type: String, required: true },
+    address: {
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      zipCode: { type: String, required: true },
+      country: { type: String, required: true }
+    }
+  },
+  preferences: {
+    language: { type: String, default: 'en' },
+    timezone: { type: String, default: 'UTC' },
+    notifications: {
+      email: { type: Boolean, default: true },
+      sms: { type: Boolean, default: false },
+      push: { type: Boolean, default: true }
+    }
+  },
+  socialMedia: {
+    twitter: { type: String },
+    linkedin: { type: String },
+    github: { type: String }
+  },
+  metadata: {
+    createdAt: { type: Date, default: Date.now },
+    lastLoginAt: { type: Date, default: Date.now },
+    loginCount: { type: Number, default: 0, min: 0 },
+    isVerified: { type: Boolean, default: false }
+  }
+});
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+userProfileSchema.plugin(mongooseTestFactory);
+const UserProfile = withFactory(mongoose.model<IUserProfile>('UserProfile', userProfileSchema));
+
+// Generate complete user profiles
+const profile = UserProfile.factory().build();
+// Automatically generates realistic nested data for all fields
+```
+
+---
+
+## ⚙️ Complete Configuration Guide
+
+### Global Configuration
+
+```typescript
+import { FactoryPlugin } from 'mongoose-test-factory';
+
+// Complete configuration example
+await FactoryPlugin.initialize({
+  // Reproducible data generation
+  seed: 12345,
+
+  // Internationalization
+  locale: 'en_US', // or 'fr', 'es', 'de', 'ja', etc.
+
+  // Debug information
+  debug: true,
+
+  // Factory-specific settings
+  factory: {
+    defaultBatchSize: 100,        // Batch size for bulk operations
+    enableMetrics: true,          // Performance tracking
+    enableCaching: true,          // Cache generated values
+    cacheSize: 1000,             // Maximum cache entries
+    validateByDefault: true,      // Validate generated data
+    defaultTraits: []            // Global traits to apply
+  },
+
+  // Performance optimization
+  performance: {
+    enableCaching: true,
+    cacheSize: 1000,
+    enableBatching: true,
+    batchSize: 100,
+    enablePooling: false,
+    poolSize: 10
+  },
+
+  // Schema analysis configuration
+  schemaAnalysis: {
+    enablePatternRecognition: true,
+    enableSemanticAnalysis: true,
+    customPatterns: {
+      // Custom field name patterns
+      sku: /^(sku|productCode|itemCode)$/i,
+      isbn: /^isbn/i
+    },
+    customSemantics: {
+      // Custom semantic generators
+      sku: () => `SKU-${Date.now()}`,
+      isbn: () => `978-${Math.random().toString().slice(2, 12)}`
+    }
+  },
+
+  // Relationship handling
+  autoRelations: true,
+  relationMappings: {
+    // Define custom relationship handlers
+    'User.posts': {
+      model: 'Post',
+      foreignKey: 'author',
+      defaultCount: 3
+    }
+  },
+
+  // Global limits
+  maxBatchSize: 10000
+});
+```
+
+### Advanced Factory Configuration
+
+```typescript
+import { createFactory, FactoryHelpers } from 'mongoose-test-factory';
+
+// Create factory with custom configuration
+const userFactory = createFactory(User, {
+  // Default field values
+  defaults: {
+    isActive: true,
+    role: 'user',
+    createdAt: new Date()
+  },
+
+  // Named traits for common variations
+  traits: {
+    admin: (builder) => builder.with({
+      role: 'admin',
+      permissions: ['read', 'write', 'delete']
+    }),
+
+    verified: (builder) => builder.with({
+      emailVerified: true,
+      phoneVerified: true,
+      verifiedAt: new Date()
+    }),
+
+    premium: (builder) => builder.with({
+      subscription: 'premium',
+      subscriptionExpires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    }),
+
+    inactive: (builder) => builder.with({
+      isActive: false,
+      deactivatedAt: new Date(),
+      lastLoginAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    })
+  },
+
+  // Lifecycle hooks
+  hooks: {
+    beforeCreate: async (doc) => {
+      // Hash password before saving
+      if (doc.password) {
+        doc.password = await hashPassword(doc.password);
+      }
+    },
+
+    afterCreate: async (doc) => {
+      // Send welcome email
+      await sendWelcomeEmail(doc.email);
+    },
+
+    beforeBuild: (doc) => {
+      // Add computed fields
+      doc.displayName = `${doc.firstName} ${doc.lastName}`;
+    },
+
+    afterBuild: (doc) => {
+      // Final transformations
+      doc.slug = doc.name.toLowerCase().replace(/\s+/g, '-');
+    }
+  }
+});
+
+// Use custom factory
+const admin = userFactory().trait('admin').trait('verified').build();
+const premiumUsers = await userFactory(10).trait('premium').create();
+```
+
+---
+
+## 🎯 Real-World Use Cases
+
+### Testing API Endpoints
+
+```typescript
+describe('User API', () => {
+  beforeEach(async () => {
+    // Set deterministic seed for consistent tests
+    FactoryPlugin.setSeed(12345);
+  });
+
+  it('should create user with valid data', async () => {
+    const userData = User.factory().build();
+
+    const response = await request(app)
+      .post('/api/users')
+      .send(userData)
+      .expect(201);
+
+    expect(response.body.email).toBe(userData.email);
+  });
+
+  it('should handle user registration', async () => {
+    const newUser = User.factory()
+      .with({ password: 'SecurePass123!' })
+      .build();
+
+    const response = await request(app)
+      .post('/api/register')
+      .send(newUser)
+      .expect(201);
+
+    expect(response.body.user.isActive).toBe(true);
+  });
+});
+```
+
+### Database Seeding
+
+```typescript
+// seeds/development.ts
+import { FactoryPlugin } from 'mongoose-test-factory';
+
+async function seedDatabase() {
+  // Create admin users
+  const admins = await User.factory(3)
+    .trait('admin')
+    .trait('verified')
+    .create();
+
+  // Create regular users
+  const users = await User.factory(50)
+    .trait('verified')
+    .create();
+
+  // Create products with reviews
+  for (const admin of admins) {
+    const products = await Product.factory(20)
+      .with({ vendor: admin._id })
+      .create();
+
+    // Add reviews from random users
+    for (const product of products) {
+      const reviewCount = Math.floor(Math.random() * 10) + 1;
+      const randomUsers = users.sort(() => 0.5 - Math.random()).slice(0, reviewCount);
+
+      product.reviews = randomUsers.map(user => ({
+        userId: user._id,
+        rating: Math.floor(Math.random() * 5) + 1,
+        comment: faker.lorem.paragraph(),
+        createdAt: faker.date.past()
+      }));
+
+      await product.save();
+    }
+  }
+
+  console.log('Database seeded successfully!');
+}
+```
+
+### Performance Testing
+
+```typescript
+// Generate large datasets for performance testing
+describe('Performance Tests', () => {
+  it('should handle bulk user creation', async () => {
+    const start = Date.now();
+
+    // Create 10,000 users in batches
+    const users = await User.factory(10000).create();
+
+    const duration = Date.now() - start;
+    console.log(`Created ${users.length} users in ${duration}ms`);
+
+    expect(users).toHaveLength(10000);
+    expect(duration).toBeLessThan(30000); // Should complete in under 30s
+  });
+
+  it('should generate complex nested data efficiently', async () => {
+    const profiles = UserProfile.factory(1000).build();
+
+    expect(profiles).toHaveLength(1000);
+    expect(profiles.every(p => p.contactInfo.email.includes('@'))).toBe(true);
+  });
+});
+```
+
+### Integration Testing
+
+```typescript
+// Test complete workflows
+describe('E-commerce Integration', () => {
+  let user: IUser;
+  let products: IProduct[];
+
+  beforeEach(async () => {
+    // Setup test data
+    user = await User.factory()
+      .trait('verified')
+      .with({ balance: 1000 })
+      .create();
+
+    products = await Product.factory(5)
+      .with({ price: 50, inStock: true })
+      .create();
+  });
+
+  it('should complete purchase workflow', async () => {
+    // Add products to cart
+    const cartItems = products.slice(0, 3).map(p => ({
+      productId: p._id,
+      quantity: 1,
+      price: p.price
+    }));
+
+    // Create order
+    const order = await Order.factory()
+      .with({
+        userId: user._id,
+        items: cartItems,
+        totalAmount: cartItems.reduce((sum, item) => sum + item.price, 0)
+      })
+      .create();
+
+    // Process payment
+    const payment = await Payment.factory()
+      .with({
+        orderId: order._id,
+        userId: user._id,
+        amount: order.totalAmount
+      })
+      .create();
+
+    expect(order.status).toBe('pending');
+    expect(payment.status).toBe('completed');
+  });
+});
+```
+
+---
+
+## 🔧 TypeScript Integration
+
+### Full Type Safety
+
+```typescript
+import { withFactory, ModelWithFactory } from 'mongoose-test-factory';
+
+// Your model with full factory typing
+const User: ModelWithFactory<IUser> = withFactory(
+  mongoose.model<IUser>('User', userSchema)
+);
+
+// Full autocompletion and type checking
+const user = User.factory()
+  .with({ name: 'John' }) // ✅ 'name' is typed
+  .with({ invalidField: 'test' }) // ❌ TypeScript error
+  .build(); // ✅ Returns IUser
+
+// Type-safe method chaining
+const users = User.factory(10)
+  .with({ isActive: true })
+  .trait('verified')
+  .build(); // ✅ Returns IUser[]
+```
+
+### Custom Generator Types
+
+```typescript
+// Extend with custom generators
+declare module 'mongoose-test-factory' {
+  interface CustomGenerators {
+    isbn(): string;
+    sku(): string;
+    colorHex(): string;
+  }
+}
+
+// Use in your schemas
+const bookSchema = new Schema({
+  isbn: { type: String, required: true },
+  title: { type: String, required: true }
+});
+```
+
+---
+
+## 📊 Performance & Metrics
+
+### Built-in Performance Monitoring
+
+```typescript
+// Enable metrics collection
+await FactoryPlugin.initialize({
+  factory: { enableMetrics: true }
+});
+
+// Generate test data
+await User.factory(1000).create();
+
+// View performance metrics
+const metrics = FactoryPlugin.getMetrics();
+console.log(metrics);
+// Output: {
+//   totalDocumentsGenerated: 1000,
+//   averageGenerationTime: 1.2,
+//   cacheHitRate: 0.85,
+//   memoryUsage: { ... },
+//   batchOperations: 10
+// }
+```
+
+### Memory Management
+
+```typescript
+// Configure memory-efficient generation
+await FactoryPlugin.initialize({
+  performance: {
+    enableBatching: true,
+    batchSize: 100,        // Process in smaller batches
+    enablePooling: true,   // Reuse object instances
+    poolSize: 50
+  }
+});
+```
+
+---
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+#### TypeScript Errors
+
+```typescript
+// ❌ Property 'factory' does not exist on type 'Model'
+const user = User.factory().build();
+
+// ✅ Solution: Use withFactory helper
+import { withFactory } from 'mongoose-test-factory';
+const User = withFactory(UserModel);
+```
+
+#### Validation Errors
+
+```typescript
+// ❌ Generated data doesn't match schema constraints
+const user = User.factory().build();
+
+// ✅ Solution: Check field patterns and constraints
+const userSchema = new Schema({
+  email: {
+    type: String,
+    required: true,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // Factory respects regex
+  }
+});
+```
+
+#### Performance Issues
+
+```typescript
+// ❌ Slow generation for large datasets
+await User.factory(10000).create();
+
+// ✅ Solution: Configure batch processing
+await FactoryPlugin.initialize({
+  factory: { defaultBatchSize: 500 },
+  performance: { enableBatching: true }
+});
+```
+
+### Debug Mode
+
+```typescript
+// Enable detailed logging
+await FactoryPlugin.initialize({ debug: true });
+
+// View internal operations
+const user = User.factory().build();
+// Logs:
+// [FactoryPlugin] Schema analysis completed for User
+// [StringGenerator] Generated email: john.doe@example.com
+// [NumberGenerator] Generated age: 28 (within constraints 18-120)
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+git clone https://github.com/nexus-aissam/mongoose-test-factory.git
+cd mongoose-test-factory
+npm install
+npm run build
+npm test
+```
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Faker.js](https://fakerjs.dev/) for realistic data generation
+- [Mongoose](https://mongoosejs.com/) for MongoDB object modeling
+- The TypeScript community for excellent tooling
+
+---
+
+**Made with ❤️ by developers, for developers. Happy testing!** 🚀

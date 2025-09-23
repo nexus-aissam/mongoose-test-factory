@@ -19,7 +19,6 @@ export {
 // Export types
 export type {
   BaseDocument,
-  ModelWithFactory,
   FactoryConfig,
   GenerationContext,
   FactoryError,
@@ -32,6 +31,14 @@ export type {
 
 // Import the mongoose augmentation to enable global type extensions
 import "./types/mongoose-augmentation";
+
+// Export type helpers
+export type {
+  WithFactoryMethod,
+  ModelWithFactory,
+} from "./types/mongoose-augmentation";
+
+export { withFactory } from "./plugin";
 
 export type {
   FactoryOptions,

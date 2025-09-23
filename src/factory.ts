@@ -69,8 +69,18 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   /**
    * Set the number of documents to create
    *
-   * @param num - Number of documents
+   * @param num - Number of documents to generate (must be positive)
    * @returns Factory instance for method chaining
+   * @throws {FactoryError} When num is negative
+   *
+   * @example
+   * ```typescript
+   * // Generate 5 users
+   * const users = User.factory().count(5).build();
+   *
+   * // Create 10 products and save to database
+   * const products = await Product.factory().count(10).create();
+   * ```
    */
   count(num: number): FactoryBuilder<T> {
     if (num < 0) {
@@ -83,11 +93,38 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   }
 
   /**
-   * Override specific field values
+   * Override specific field values in the generated documents
    *
-   * @param field - Field name or object with multiple overrides
-   * @param value - Value to set (if field is string)
+   * This method allows you to customize the generated data by providing specific values
+   * for fields instead of using the automatically generated ones.
+   *
+   * @param field - Field name (string) or object with multiple field overrides
+   * @param value - Value to set for the field (required when field is a string)
    * @returns Factory instance for method chaining
+   * @throws {FactoryError} When field is string but value is undefined
+   *
+   * @example
+   * ```typescript
+   * // Override a single field
+   * const user = User.factory()
+   *   .with('name', 'John Doe')
+   *   .build();
+   *
+   * // Override multiple fields at once
+   * const user = User.factory()
+   *   .with({
+   *     name: 'Jane Smith',
+   *     email: 'jane@example.com',
+   *     age: 30
+   *   })
+   *   .build();
+   *
+   * // Chain multiple overrides
+   * const product = Product.factory()
+   *   .with('name', 'Special Product')
+   *   .with({ price: 99.99, inStock: true })
+   *   .build();
+   * ```
    */
   with(field: keyof T | Partial<T>, value?: any): FactoryBuilder<T> {
     if (typeof field === "string") {
@@ -103,11 +140,29 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   }
 
   /**
-   * Add related documents
+   * Add related documents for relationship fields
    *
-   * @param field - Relationship field name
-   * @param count - Number of related documents to create
+   * This method helps create related documents for ObjectId references or embedded documents.
+   * It automatically handles the relationship creation and linking.
+   *
+   * @param field - The relationship field name in your schema
+   * @param count - Number of related documents to create (must be positive)
    * @returns Factory instance for method chaining
+   * @throws {FactoryError} When count is negative
+   *
+   * @example
+   * ```typescript
+   * // Create a user with 3 related posts
+   * const user = await User.factory()
+   *   .withRelated('posts', 3)
+   *   .create();
+   *
+   * // Create an order with 5 related order items
+   * const order = await Order.factory()
+   *   .withRelated('items', 5)
+   *   .withRelated('payments', 1)
+   *   .create();
+   * ```
    */
   withRelated(field: keyof T, count: number): FactoryBuilder<T> {
     if (count < 0) {
@@ -119,10 +174,28 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   }
 
   /**
-   * Apply named traits
+   * Apply named traits to customize document generation
    *
-   * @param name - Trait name
+   * Traits are reusable configurations that apply specific modifications to generated documents.
+   * They help create common variations like 'admin users', 'verified accounts', etc.
+   *
+   * @param name - The name of the trait to apply
    * @returns Factory instance for method chaining
+   *
+   * @example
+   * ```typescript
+   * // Assuming traits are defined in factory configuration
+   * const adminUser = User.factory()
+   *   .trait('admin')
+   *   .trait('verified')
+   *   .build();
+   *
+   * // Multiple traits can be chained
+   * const premiumUser = User.factory()
+   *   .trait('premium')
+   *   .trait('active')
+   *   .create();
+   * ```
    */
   trait(name: string): FactoryBuilder<T> {
     if (!this.state.traits.includes(name)) {
@@ -132,7 +205,37 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   }
 
   /**
-   * Create documents and save to database
+   * Create documents and save them to the database
+   *
+   * This method generates the specified number of documents, validates them according to your
+   * schema, and saves them to the MongoDB database. It returns the saved documents with
+   * their assigned _id values.
+   *
+   * @param count - Optional number of documents to create (overrides previously set count)
+   * @returns Promise resolving to a single document (when count=1) or array of documents
+   * @throws {GenerationError} When document generation fails
+   * @throws {ValidationError} When document validation fails
+   *
+   * @example
+   * ```typescript
+   * // Create a single user and save to database
+   * const user = await User.factory().create();
+   *
+   * // Create multiple users
+   * const users = await User.factory(5).create();
+   * // or
+   * const users = await User.factory().create(5);
+   *
+   * // Create with custom data
+   * const admin = await User.factory()
+   *   .with({ role: 'admin', isActive: true })
+   *   .create();
+   *
+   * // Create with relationships
+   * const userWithPosts = await User.factory()
+   *   .withRelated('posts', 3)
+   *   .create();
+   * ```
    */
   create(): Promise<T[]>;
   create(count: 1): Promise<T>;
@@ -163,7 +266,37 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   }
 
   /**
-   * Build documents without saving
+   * Build documents as plain JavaScript objects without saving to database
+   *
+   * This method generates documents and returns them as plain JavaScript objects.
+   * It's the fastest generation method as it doesn't involve Mongoose document
+   * instantiation or database operations. Perfect for unit tests.
+   *
+   * @param count - Optional number of documents to build (overrides previously set count)
+   * @returns Single object (when count=1) or array of plain JavaScript objects
+   * @throws {GenerationError} When document generation fails
+   *
+   * @example
+   * ```typescript
+   * // Build a single user object
+   * const userData = User.factory().build();
+   * console.log(userData); // { name: 'John Doe', email: 'john@example.com', ... }
+   *
+   * // Build multiple users
+   * const usersData = User.factory(10).build();
+   * // or
+   * const usersData = User.factory().build(10);
+   *
+   * // Build with custom data
+   * const customUser = User.factory()
+   *   .with({ name: 'Jane Smith', age: 25 })
+   *   .build();
+   *
+   * // Perfect for testing functions that expect plain objects
+   * function processUserData(userData) { ... }
+   * const testData = User.factory().build();
+   * processUserData(testData);
+   * ```
    */
   build(): T[];
   build(count: 1): T;
@@ -187,7 +320,40 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
   }
 
   /**
-   * Make documents (create new instances)
+   * Make documents as new Mongoose instances without saving to database
+   *
+   * This method generates documents and returns them as new Mongoose document instances.
+   * The documents have all Mongoose features (virtuals, methods, etc.) but are not saved
+   * to the database (isNew = true). Perfect for testing model methods and virtuals.
+   *
+   * @param count - Optional number of documents to make (overrides previously set count)
+   * @returns Single Mongoose document (when count=1) or array of Mongoose documents
+   * @throws {GenerationError} When document generation fails
+   *
+   * @example
+   * ```typescript
+   * // Make a single user instance
+   * const user = User.factory().make();
+   * console.log(user instanceof User); // true
+   * console.log(user.isNew); // true
+   *
+   * // Make multiple users
+   * const users = User.factory(5).make();
+   * // or
+   * const users = User.factory().make(5);
+   *
+   * // Test instance methods
+   * const user = User.factory()
+   *   .with({ email: 'test@example.com' })
+   *   .make();
+   * const isValid = user.validateEmail(); // Call instance method
+   *
+   * // Test virtuals
+   * const user = User.factory()
+   *   .with({ firstName: 'John', lastName: 'Doe' })
+   *   .make();
+   * console.log(user.fullName); // Access virtual property
+   * ```
    */
   make(): T[];
   make(count: 1): T;
@@ -679,12 +845,38 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
 }
 
 /**
- * Create a new factory instance
+ * Create a new factory instance for generating test data
  *
- * @param model - Mongoose model
- * @param options - Factory options
- * @param config - Factory configuration
- * @returns New factory instance
+ * This function creates a factory builder that can generate documents for a specific
+ * Mongoose model. It's the primary way to create factories programmatically.
+ *
+ * @template T - The document type extending BaseDocument
+ * @param model - The Mongoose model to create a factory for
+ * @param options - Optional factory options including count, overrides, and context
+ * @param config - Optional factory configuration with traits, defaults, and hooks
+ * @returns New factory builder instance ready for chaining
+ *
+ * @example
+ * ```typescript
+ * import { createFactory } from 'mongoose-test-factory';
+ *
+ * // Create a basic factory
+ * const userFactory = createFactory(User);
+ * const user = userFactory.build();
+ *
+ * // Create factory with initial options
+ * const userFactory = createFactory(User, { count: 5 });
+ * const users = userFactory.build();
+ *
+ * // Create factory with configuration
+ * const userFactory = createFactory(User, {}, {
+ *   defaults: { isActive: true },
+ *   traits: {
+ *     admin: (builder) => builder.with({ role: 'admin' })
+ *   }
+ * });
+ * const admin = userFactory.trait('admin').build();
+ * ```
  */
 export function createFactory<T extends BaseDocument>(
   model: Model<T>,
@@ -695,15 +887,41 @@ export function createFactory<T extends BaseDocument>(
 }
 
 /**
- * Factory helper functions
+ * Utility functions for factory management and configuration
+ *
+ * This object contains helper functions used internally by the plugin and
+ * available for advanced use cases.
  */
 export const FactoryHelpers = {
   /**
-   * Create a factory method for a model
+   * Create a factory method function that can be attached to a Mongoose model
    *
-   * @param model - Mongoose model
-   * @param config - Factory configuration
-   * @returns Factory method
+   * This method is used internally by the plugin to create the `factory()` static method
+   * on Mongoose models. It can also be used for advanced factory creation scenarios.
+   *
+   * @template T - The document type extending BaseDocument
+   * @param model - The Mongoose model to create a factory method for
+   * @param config - Optional factory configuration with defaults, traits, and hooks
+   * @returns Factory method function that creates factory instances
+   *
+   * @example
+   * ```typescript
+   * import { FactoryHelpers } from 'mongoose-test-factory';
+   *
+   * // Create a factory method with custom configuration
+   * const factoryMethod = FactoryHelpers.createFactoryMethod(User, {
+   *   defaults: { isActive: true },
+   *   traits: {
+   *     admin: (builder) => builder.with({ role: 'admin' })
+   *   }
+   * });
+   *
+   * // Attach to model manually
+   * User.customFactory = factoryMethod;
+   *
+   * // Use the custom factory
+   * const user = User.customFactory().build();
+   * ```
    */
   createFactoryMethod<T extends BaseDocument>(
     model: Model<T>,
@@ -715,10 +933,32 @@ export const FactoryHelpers = {
   },
 
   /**
-   * Validate factory configuration
+   * Validate factory configuration for correctness
    *
-   * @param config - Configuration to validate
-   * @returns Validation result
+   * This method validates that a factory configuration object is properly formatted
+   * and contains valid trait definitions, hooks, and default values.
+   *
+   * @template T - The document type extending BaseDocument
+   * @param config - Factory configuration object to validate
+   * @returns True if configuration is valid, false otherwise
+   *
+   * @example
+   * ```typescript
+   * import { FactoryHelpers } from 'mongoose-test-factory';
+   *
+   * const config = {
+   *   defaults: { isActive: true },
+   *   traits: {
+   *     admin: (builder) => builder.with({ role: 'admin' })
+   *   }
+   * };
+   *
+   * if (FactoryHelpers.validateConfig(config)) {
+   *   console.log('Configuration is valid');
+   * } else {
+   *   console.error('Invalid configuration');
+   * }
+   * ```
    */
   validateConfig<T extends BaseDocument>(config: FactoryConfig<T>): boolean {
     // Configuration validation logic would go here
