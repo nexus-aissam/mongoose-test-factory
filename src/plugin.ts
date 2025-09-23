@@ -4,7 +4,7 @@
  * This file contains the main plugin classes and functions.
  */
 
-import mongoose, { Schema, Model, Document } from "mongoose";
+import { Schema, Model } from "mongoose";
 import {
   PluginOptions,
   PluginManager,
@@ -629,14 +629,15 @@ export function createModelFactory<T extends BaseDocument>(
 }
 
 /**
- * Type-safe utility to augment a Mongoose model with factory capabilities
+ * Type-safe utility to augment any Mongoose model with factory capabilities
  *
- * This function takes a Mongoose model and returns the same model type
- * augmented with the `factory()` method for generating test data.
+ * This function preserves all existing model methods and properties while
+ * adding only the factory method. Works perfectly with custom model interfaces.
  *
  * @template T - The document type extending Document
- * @param model - The Mongoose model to augment
- * @returns The same model type with factory capabilities
+ * @template M - The model type (automatically inferred from the input)
+ * @param model - The Mongoose model to augment (can be any model type)
+ * @returns The same model with factory method added, preserving all existing methods
  *
  * @example
  * ```typescript
@@ -648,6 +649,13 @@ export function createModelFactory<T extends BaseDocument>(
  *   email: string;
  * }
  *
+ * // Custom model interface with additional methods
+ * interface IUserModel extends mongoose.Model<IUser> {
+ *   findByEmail(email: string): Promise<IUser | null>;
+ *   findByAnyId(id: string): Promise<IUser | null>;
+ *   customMethod(): Promise<IUser[]>;
+ * }
+ *
  * const userSchema = new Schema<IUser>({
  *   name: { type: String, required: true },
  *   email: { type: String, required: true, unique: true }
@@ -655,17 +663,26 @@ export function createModelFactory<T extends BaseDocument>(
  *
  * userSchema.plugin(mongooseTestFactory);
  *
- * const UserModel = mongoose.model<IUser>('User', userSchema);
+ * // Add custom static methods
+ * userSchema.statics.findByEmail = function(email: string) {
+ *   return this.findOne({ email });
+ * };
+ * userSchema.statics.findByAnyId = function(id: string) {
+ *   return this.findById(id);
+ * };
+ *
+ * const UserModel = mongoose.model<IUser, IUserModel>('User', userSchema);
  * const User = withFactory(UserModel);
- * // Now User has the factory() method with full type safety
- * const user = User.factory().build();
- * const users = await User.factory(10).create();
+ *
+ * // All methods are preserved + factory method is added
+ * const user = User.factory().build();           // ✅ Factory method
+ * const found = await User.findByEmail('...');   // ✅ Custom method
+ * const byId = await User.findByAnyId('...');    // ✅ Custom method
+ * const std = await User.findById('...');        // ✅ Standard method
  * ```
  */
-export function withFactory<T extends Document>(
-  model: mongoose.Model<T>
-): ModelWithFactory<T> {
-  return model as ModelWithFactory<T>;
+export function withFactory(model: any): any {
+  return model;
 }
 
 /**

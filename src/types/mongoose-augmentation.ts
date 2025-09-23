@@ -35,19 +35,28 @@ export interface WithFactoryMethod<T extends Document> {
 }
 
 /**
- * Utility type that combines a Mongoose model with factory capabilities
+ * Utility type that combines any model type with factory capabilities
  *
- * This type extends the standard Mongoose Model interface to include
- * the factory method, providing full type safety for factory operations.
+ * This type preserves all existing model methods and properties while
+ * adding only the factory method. It works with custom model interfaces.
  *
  * @template T - The document type extending Document
+ * @template M - The model type (defaults to mongoose.Model<T>)
  *
  * @example
  * ```typescript
- * // Use as a type annotation
+ * // Works with standard models
  * const UserModel: ModelWithFactory<IUser> = mongoose.model('User', userSchema);
- * const user = UserModel.factory().build(); // Fully typed
+ *
+ * // Works with custom model interfaces
+ * interface ICustomUserModel extends mongoose.Model<IUser> {
+ *   findByEmail(email: string): Promise<IUser | null>;
+ *   findByAnyId(id: string): Promise<IUser | null>;
+ * }
+ * const CustomUserModel: ModelWithFactory<IUser, ICustomUserModel> = mongoose.model('User', userSchema);
  * ```
  */
-export type ModelWithFactory<T extends Document> = mongoose.Model<T> &
-  WithFactoryMethod<T>;
+export type ModelWithFactory<
+  T extends Document = any,
+  M extends mongoose.Model<T> = mongoose.Model<T>
+> = M & WithFactoryMethod<T>;

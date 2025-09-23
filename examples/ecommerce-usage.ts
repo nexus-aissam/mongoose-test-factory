@@ -31,9 +31,25 @@ const productSchema = new Schema<IProduct>({
 // Apply the factory plugin
 productSchema.plugin(mongooseTestFactory);
 
+// Define custom model interface (if you have custom static methods)
+interface IProductModel extends mongoose.Model<IProduct> {
+  findByAnyId(id: string): Promise<IProduct | null>;
+  findByCategory(category: string): Promise<IProduct[]>;
+  // Add any other custom static methods here
+}
+
+// Add custom static methods to schema
+productSchema.statics.findByAnyId = function(id: string) {
+  return this.findById(id);
+};
+
+productSchema.statics.findByCategory = function(category: string) {
+  return this.find({ category });
+};
+
 // Create the model with factory type assistance
-const ProductModel = mongoose.model<IProduct>("Product", productSchema);
-const Product = withFactory(ProductModel);
+const ProductModel = mongoose.model<IProduct, IProductModel>("Product", productSchema);
+const Product = withFactory(ProductModel); // Preserves all custom methods + adds factory
 
 // Usage examples - these should work without TypeScript errors
 async function examples() {
@@ -55,6 +71,14 @@ async function examples() {
   const factoryInstance = Product.factory();
   const madeProduct = factoryInstance.make();
   console.log("Made product:", madeProduct);
+
+  // Test custom methods are preserved
+  console.log("Testing custom methods:");
+  const productWithId = await Product.findByAnyId("someId");
+  console.log("findByAnyId works:", productWithId !== undefined);
+
+  const categoryProducts = await Product.findByCategory("electronics");
+  console.log("findByCategory works:", Array.isArray(categoryProducts));
 }
 
 export { Product, examples };
