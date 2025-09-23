@@ -14,8 +14,7 @@ export interface BaseDocument extends Document {
 /**
  * Mongoose model type with factory method
  */
-export interface ModelWithFactory<T extends BaseDocument>
-  extends Model<T> {
+export interface ModelWithFactory<T extends BaseDocument> extends Model<T> {
   factory(count?: number): FactoryBuilder<T>;
 }
 
@@ -181,9 +180,7 @@ export type OptionalKeys<T> = {
 /**
  * Type for extracting document type from model
  */
-export type DocumentType<T> = T extends Model<infer U>
-  ? U
-  : never;
+export type DocumentType<T> = T extends Model<infer U> ? U : never;
 
 /**
  * Type for field name extraction

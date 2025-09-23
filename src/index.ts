@@ -19,6 +19,7 @@ export {
 // Export types
 export type {
   BaseDocument,
+  ModelWithFactory,
   FactoryConfig,
   GenerationContext,
   FactoryError,
