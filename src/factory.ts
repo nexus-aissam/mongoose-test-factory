@@ -537,7 +537,9 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
     try {
       // Use synchronous generation if available, otherwise fallback to basic value
       if (generator.generateSync) {
-        return generator.generateSync(this.state.context as unknown as GenerationContext);
+        return generator.generateSync(
+          this.state.context as unknown as GenerationContext
+        );
       } else {
         // Fallback to basic values for sync operation
         return this.getBasicValue(fieldAnalysis.type);
@@ -602,7 +604,9 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
     }
 
     try {
-      return await generator.generate(this.state.context as unknown as GenerationContext);
+      return await generator.generate(
+        this.state.context as unknown as GenerationContext
+      );
     } catch (error) {
       throw new GenerationError(
         `Failed to generate value for field ${fieldPath}: ${

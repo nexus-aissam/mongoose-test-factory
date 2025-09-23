@@ -11,6 +11,7 @@ import {
   ValidationConstraints,
   FieldRelationship,
 } from "../types/common";
+import { FactoryType } from "../types/factory-types";
 
 /**
  * Schema analysis result interface
@@ -55,6 +56,7 @@ export interface FieldAnalysis {
   patterns: string[];
   semantic?: string | undefined; // Add undefined explicitly
   generatorHint?: string | undefined; // Add undefined explicitly
+  factoryType?: FactoryType | undefined; // Explicit factory type from schema
   autoGenerate: boolean;
   description?: string | undefined; // Add undefined explicitly
   examples?: any[] | undefined; // Add undefined explicitly
@@ -257,6 +259,7 @@ export class SchemaAnalyzer {
         patternResult.patterns || [],
         semanticResult.semantic
       ),
+      factoryType: this.extractFactoryType(schemaType), // Extract explicit factory type
       autoGenerate: this.shouldAutoGenerate(path, constraints, relationship),
       description: this.getFieldDescription(schemaType),
       examples: this.getFieldExamples(schemaType),
@@ -450,6 +453,29 @@ export class SchemaAnalyzer {
         path,
         isArray: this.isArrayField(schemaType),
       };
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Extract explicit factory type from schema options
+   */
+  extractFactoryType(schemaType: SchemaType): FactoryType | undefined {
+    const options = (schemaType as any).options || {};
+
+    // Check for factoryType in schema options
+    if (options.factoryType && typeof options.factoryType === 'string') {
+      return options.factoryType as FactoryType;
+    }
+
+    // For backward compatibility, also check common alternative names
+    if (options.factory && typeof options.factory === 'string') {
+      return options.factory as FactoryType;
+    }
+
+    if (options.dataType && typeof options.dataType === 'string') {
+      return options.dataType as FactoryType;
     }
 
     return undefined;

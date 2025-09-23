@@ -31,6 +31,7 @@ export type {
 
 // Import the mongoose augmentation to enable global type extensions
 import "./types/mongoose-augmentation";
+import "./types/mongoose-factory-augmentation";
 
 // Export type helpers
 export type {
@@ -49,6 +50,19 @@ export type {
 } from "./types/factory";
 
 export type { PluginOptions, PluginState, PluginHooks } from "./types/plugin";
+
+// Export factory types
+export type {
+  FactoryType,
+  StringFactoryType,
+  NumberFactoryType,
+  DateFactoryType,
+  BooleanFactoryType,
+  ArrayFactoryType,
+  SpecialFactoryType,
+  FactoryTypeInfo,
+  FactoryTypeCategory,
+} from "./types/factory-types";
 
 // Export factory utilities
 export { Factory, createFactory, FactoryHelpers } from "./factory";

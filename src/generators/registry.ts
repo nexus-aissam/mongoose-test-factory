@@ -47,6 +47,7 @@ import {
   Decimal128Generator,
   BigIntGenerator,
 } from "./specialized";
+import { FactoryType, getFactoryTypeInfo } from "../types/factory-types";
 
 /**
  * Generator registry implementation
@@ -55,6 +56,7 @@ export class GeneratorRegistry implements IGeneratorRegistry {
   private generators = new Map<string, BaseGenerator>();
   private generatorConfigs = new Map<string, GeneratorConfig>();
   private fieldTypeCache = new Map<FieldType, BaseGenerator[]>();
+  private factoryTypeMapping = new Map<FactoryType, string>();
   private initialized = false;
 
   /**
@@ -110,14 +112,27 @@ export class GeneratorRegistry implements IGeneratorRegistry {
   }
 
   /**
-   * Get best generator for field type
+   * Get best generator for field type, with optional factory type override
    */
   getBest(
     fieldType: FieldType,
-    constraints?: ValidationConstraints
+    constraints?: ValidationConstraints,
+    factoryType?: FactoryType
   ): BaseGenerator | undefined {
     this.ensureInitialized();
 
+    // Priority 1: Explicit factory type (highest priority)
+    if (factoryType) {
+      const explicitGenerator = this.getByFactoryType(factoryType);
+      if (explicitGenerator && explicitGenerator.isEnabled()) {
+        console.debug(`Using explicit factory type '${factoryType}' generator`);
+        return explicitGenerator;
+      } else {
+        console.warn(`Factory type '${factoryType}' not found or disabled, falling back to field type matching`);
+      }
+    }
+
+    // Priority 2: Field type matching (existing logic)
     const candidates = this.getAll(fieldType);
 
     if (candidates.length === 0) {
@@ -170,6 +185,42 @@ export class GeneratorRegistry implements IGeneratorRegistry {
     this.fieldTypeCache.set(fieldType, matchingGenerators);
 
     return matchingGenerators;
+  }
+
+  /**
+   * Get generator by factory type
+   */
+  getByFactoryType(factoryType: FactoryType): BaseGenerator | undefined {
+    this.ensureInitialized();
+
+    const generatorName = this.factoryTypeMapping.get(factoryType);
+    if (generatorName) {
+      return this.generators.get(generatorName);
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Register a factory type mapping to a generator
+   */
+  registerFactoryType(factoryType: FactoryType, generatorName: string): void {
+    if (!this.generators.has(generatorName)) {
+      console.warn(
+        `Cannot map factory type '${factoryType}' to non-existent generator '${generatorName}'`
+      );
+      return;
+    }
+
+    this.factoryTypeMapping.set(factoryType, generatorName);
+    console.debug(`Mapped factory type '${factoryType}' to generator '${generatorName}'`);
+  }
+
+  /**
+   * Get all factory type mappings
+   */
+  getFactoryTypeMappings(): Map<FactoryType, string> {
+    return new Map(this.factoryTypeMapping);
   }
 
   /**
@@ -337,7 +388,71 @@ export class GeneratorRegistry implements IGeneratorRegistry {
     this.register("decimal128", new Decimal128Generator());
     this.register("bigint", new BigIntGenerator());
 
+    // Register factory type mappings
+    this.registerFactoryTypeMappings();
+
     console.debug("Registered default generators");
+  }
+
+  /**
+   * Register factory type mappings to generators
+   */
+  private registerFactoryTypeMappings(): void {
+    // String factory types
+    this.registerFactoryType('email', 'email');
+    this.registerFactoryType('phone', 'string');  // Could create specialized generator later
+    this.registerFactoryType('name', 'string');
+    this.registerFactoryType('firstName', 'string');
+    this.registerFactoryType('lastName', 'string');
+    this.registerFactoryType('username', 'string');
+    this.registerFactoryType('password', 'password');
+    this.registerFactoryType('url', 'string');
+    this.registerFactoryType('slug', 'slug');
+    this.registerFactoryType('address', 'string');
+    this.registerFactoryType('city', 'string');
+    this.registerFactoryType('country', 'string');
+    this.registerFactoryType('company', 'string');
+    this.registerFactoryType('description', 'string');
+    this.registerFactoryType('title', 'string');
+
+    // Number factory types
+    this.registerFactoryType('price', 'price');
+    this.registerFactoryType('age', 'age');
+    this.registerFactoryType('rating', 'rating');
+    this.registerFactoryType('percentage', 'number');
+    this.registerFactoryType('quantity', 'number');
+    this.registerFactoryType('year', 'number');
+
+    // Date factory types
+    this.registerFactoryType('timestamp', 'timestamp');
+    this.registerFactoryType('birthdate', 'birthdate');
+    this.registerFactoryType('futuredate', 'futuredate');
+    this.registerFactoryType('pastdate', 'date'); // Use base date generator
+
+    // Boolean factory types (all use boolean generator with different logic)
+    this.registerFactoryType('active', 'boolean');
+    this.registerFactoryType('verified', 'boolean');
+    this.registerFactoryType('premium', 'boolean');
+    this.registerFactoryType('public', 'boolean');
+
+    // Array factory types
+    this.registerFactoryType('tags', 'array');
+    this.registerFactoryType('skills', 'array');
+    this.registerFactoryType('emails', 'array');
+    this.registerFactoryType('phones', 'array');
+    this.registerFactoryType('names', 'array');
+    this.registerFactoryType('categories', 'array');
+    this.registerFactoryType('languages', 'array');
+    this.registerFactoryType('urls', 'array');
+
+    // Special factory types
+    this.registerFactoryType('objectid', 'objectid');
+    this.registerFactoryType('uuid', 'uuid');
+
+    // Random types (map to base generators)
+    this.registerFactoryType('random', 'string'); // Will be context-dependent
+
+    console.debug("Registered factory type mappings");
   }
 
   /**

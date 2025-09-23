@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/nexus-aissam/mongoose-test-factory)
 
-**The most intelligent and powerful test data generator for Mongoose.** Generate realistic, valid, and contextually-aware test data with zero configuration. Stop writing tedious mock objects and start building meaningful test data in seconds.
+**The most intelligent and powerful test data generator for Mongoose.** Generate realistic, valid, and contextually-aware test data with zero configuration OR take complete control with 40+ explicit factory types. Stop writing tedious mock objects and start building meaningful test data in seconds.
 
 ## ✨ Why Choose Mongoose Test Factory?
 
@@ -18,6 +18,7 @@
 ### 🧠 **Intelligent by Design**
 
 - **Deep Schema Analysis**: Understands complex nested schemas, arrays, and subdocuments
+- **Explicit Type Control**: Use `factoryType` for precise data generation (NEW!)
 - **Context-Aware Generation**: Field names determine data type (e.g., `userEmail` generates emails, `firstName` generates names)
 - **Validation Compliant**: Honors `required`, `min`, `max`, `enum`, `unique`, and custom validators
 
@@ -30,6 +31,7 @@
 ### 🔧 **Production-Ready Features**
 
 - **TypeScript First**: Full type safety with intelligent autocompletion
+- **Explicit Factory Types**: 40+ built-in types with `factoryType` specification
 - **Relationship Management**: Automatic ObjectId generation and linking
 - **Global Configuration**: Set seeds for reproducible tests across teams
 - **Performance Optimized**: Batch operations, caching, and memory management
@@ -94,6 +96,145 @@ console.log(user);
 ```
 
 > **💡 TypeScript Tip**: If you have custom model interfaces with static methods, use explicit type parameters: `withFactory<IDocument, ICustomModel>(model)` to preserve all method types and get full IntelliSense support.
+
+---
+
+## 🎯 Explicit Factory Type Specification
+
+**NEW!** Take complete control over data generation by specifying exactly what type of data you want for each field.
+
+### Basic Usage
+
+```typescript
+const productSchema = new Schema({
+  // 📧 Generate realistic emails
+  email: { type: String, factoryType: 'email' },
+
+  // 👤 Generate person names
+  firstName: { type: String, factoryType: 'firstName' },
+  lastName: { type: String, factoryType: 'lastName' },
+
+  // 💰 Generate realistic prices
+  price: { type: Number, factoryType: 'price' },
+
+  // 🎂 Generate appropriate ages
+  age: { type: Number, factoryType: 'age' },
+
+  // 🏷️ Generate tech/category tags
+  tags: { type: [String], factoryType: 'tags' },
+
+  // ✅ Generate realistic boolean distributions
+  isActive: { type: Boolean, factoryType: 'active' }, // 80% true
+  isPremium: { type: Boolean, factoryType: 'premium' }, // 25% true
+
+  // 📅 Generate specific date types
+  birthDate: { type: Date, factoryType: 'birthdate' },
+  lastLogin: { type: Date, factoryType: 'timestamp' },
+
+  // 🆔 Generate proper IDs
+  userId: { type: ObjectId, factoryType: 'objectid' },
+  sessionId: { type: String, factoryType: 'uuid' }
+});
+```
+
+### E-commerce Example
+
+```typescript
+const productSchema = new Schema({
+  name: { type: String, factoryType: 'title' },
+  description: { type: String, factoryType: 'description' },
+  price: { type: Number, factoryType: 'price' },
+  category: { type: String, factoryType: 'random', enum: ['electronics', 'clothing'] },
+  vendor: { type: String, factoryType: 'company' },
+  tags: { type: [String], factoryType: 'tags' },
+  isActive: { type: Boolean, factoryType: 'active' },
+  website: { type: String, factoryType: 'url' }
+});
+
+const product = Product.factory().build();
+// Perfect e-commerce data every time! 🛍️
+```
+
+### Priority System
+
+1. **🎯 Explicit factoryType** (highest priority) - What you specify
+2. **🧠 Pattern matching** (fallback) - Smart field name detection
+3. **🎲 Default generators** (last resort) - Basic random data
+
+---
+
+## 📊 Factory Types Reference
+
+### String Types
+
+| Factory Type | Description | Example Output |
+|-------------|-------------|----------------|
+| `email` | Email addresses | `user@example.com` |
+| `phone` | Phone numbers | `+1-555-123-4567` |
+| `name` | Full person names | `John Doe` |
+| `firstName` | First names only | `John` |
+| `lastName` | Last names only | `Doe` |
+| `username` | Usernames | `john_doe123` |
+| `password` | Strong passwords | `Str0ng!Pass` |
+| `url` | Website URLs | `https://example.com` |
+| `slug` | URL slugs | `my-blog-post` |
+| `address` | Street addresses | `123 Main St` |
+| `city` | City names | `New York` |
+| `country` | Country names | `United States` |
+| `company` | Company names | `Tech Corp` |
+| `description` | Text descriptions | `Lorem ipsum dolor...` |
+| `title` | Titles/headlines | `Amazing Product Launch` |
+| `uuid` | UUID strings | `f47ac10b-58cc-4372...` |
+
+### Number Types
+
+| Factory Type | Description | Example Output |
+|-------------|-------------|----------------|
+| `price` | Monetary values | `19.99` |
+| `age` | Human ages | `28` |
+| `rating` | Rating scores (1-5) | `4.2` |
+| `percentage` | Percentages (0-100) | `75` |
+| `quantity` | Product quantities | `150` |
+| `year` | Years | `2024` |
+
+### Date Types
+
+| Factory Type | Description | Example Output |
+|-------------|-------------|----------------|
+| `timestamp` | Current timestamps | `2024-01-15T10:30:00Z` |
+| `birthdate` | Birth dates | `1990-05-15` |
+| `futuredate` | Future dates | `2025-06-20` |
+| `pastdate` | Past dates | `2023-01-10` |
+
+### Boolean Types
+
+| Factory Type | Description | True Probability |
+|-------------|-------------|------------------|
+| `active` | Active/enabled states | 80% |
+| `verified` | Verified/confirmed | 70% |
+| `premium` | Premium features | 25% |
+| `public` | Public visibility | 85% |
+
+### Array Types
+
+| Factory Type | Description | Example Output |
+|-------------|-------------|----------------|
+| `tags` | Tech/category tags | `['javascript', 'nodejs']` |
+| `skills` | Professional skills | `['Frontend Development']` |
+| `emails` | Array of emails | `['user@example.com']` |
+| `phones` | Array of phone numbers | `['555-123-4567']` |
+| `names` | Array of names | `['John Doe', 'Jane Smith']` |
+| `categories` | Product categories | `['Electronics', 'Books']` |
+| `languages` | Language codes | `['en', 'es', 'fr']` |
+| `urls` | Array of URLs | `['https://example.com']` |
+
+### Special Types
+
+| Factory Type | Description | Example Output |
+|-------------|-------------|----------------|
+| `objectid` | MongoDB ObjectIds | `507f1f77bcf86cd799439011` |
+| `uuid` | UUIDs | `f47ac10b-58cc-4372-a567...` |
+| `random` | Context-appropriate random | Varies by field type |
 
 ---
 
