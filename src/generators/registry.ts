@@ -36,6 +36,17 @@ import {
   FutureDateGenerator,
 } from "./date";
 import { MixedGenerator } from "./mixed";
+import { ArrayGenerator } from "./array";
+import { BooleanGenerator } from "./boolean";
+import { ObjectIdGenerator } from "./objectid";
+import {
+  ObjectGenerator,
+  BufferGenerator,
+  MapGenerator,
+  UuidGenerator,
+  Decimal128Generator,
+  BigIntGenerator,
+} from "./specialized";
 
 /**
  * Generator registry implementation
@@ -308,6 +319,23 @@ export class GeneratorRegistry implements IGeneratorRegistry {
 
     // Mixed generator
     this.register("mixed", new MixedGenerator());
+
+    // Array generator
+    this.register("array", new ArrayGenerator());
+
+    // Boolean generator
+    this.register("boolean", new BooleanGenerator());
+
+    // ObjectId generator
+    this.register("objectid", new ObjectIdGenerator());
+
+    // Specialized generators
+    this.register("object", new ObjectGenerator());
+    this.register("buffer", new BufferGenerator());
+    this.register("map", new MapGenerator());
+    this.register("uuid", new UuidGenerator());
+    this.register("decimal128", new Decimal128Generator());
+    this.register("bigint", new BigIntGenerator());
 
     console.debug("Registered default generators");
   }

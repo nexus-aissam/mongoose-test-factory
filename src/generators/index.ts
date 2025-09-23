@@ -31,6 +31,17 @@ export {
 } from './date';
 
 export { MixedGenerator } from './mixed';
+export { ArrayGenerator } from './array';
+export { BooleanGenerator } from './boolean';
+export { ObjectIdGenerator } from './objectid';
+export {
+  ObjectGenerator,
+  BufferGenerator,
+  MapGenerator,
+  UuidGenerator,
+  Decimal128Generator,
+  BigIntGenerator,
+} from './specialized';
 
 // Registry and factory (explicitly named to avoid conflicts)
 export { GeneratorRegistry as GeneratorRegistryClass } from './registry';
