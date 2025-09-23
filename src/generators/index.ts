@@ -23,12 +23,14 @@ export {
   RatingNumberGenerator
 } from './number';
 
-export { 
+export {
   MongooseDateGenerator as DateGenerator,
   TimestampDateGenerator,
   BirthDateGenerator,
   FutureDateGenerator
 } from './date';
+
+export { MixedGenerator } from './mixed';
 
 // Registry and factory (explicitly named to avoid conflicts)
 export { GeneratorRegistry as GeneratorRegistryClass } from './registry';

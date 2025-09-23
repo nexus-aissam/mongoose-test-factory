@@ -93,6 +93,8 @@ console.log(user);
 // }
 ```
 
+> **💡 TypeScript Tip**: If you have custom model interfaces with static methods, use explicit type parameters: `withFactory<IDocument, ICustomModel>(model)` to preserve all method types and get full IntelliSense support.
+
 ---
 
 ## 🏗️ How It Works Under the Hood
@@ -449,12 +451,12 @@ await FactoryPlugin.initialize({
 
   // Factory-specific settings
   factory: {
-    defaultBatchSize: 100,        // Batch size for bulk operations
-    enableMetrics: true,          // Performance tracking
-    enableCaching: true,          // Cache generated values
-    cacheSize: 1000,             // Maximum cache entries
-    validateByDefault: true,      // Validate generated data
-    defaultTraits: []            // Global traits to apply
+    defaultBatchSize: 100,         // Batch size for bulk operations
+    enableMetrics: true,           // Performance tracking
+    enableCaching: true,           // Cache generated values
+    cacheSize: 1000,               // Maximum cache entries
+    validateByDefault: true,       // Validate generated data
+    defaultTraits: []              // Global traits to apply
   },
 
   // Performance optimization
@@ -833,6 +835,30 @@ const user = User.factory().build();
 // ✅ Solution: Use withFactory helper
 import { withFactory } from 'mongoose-test-factory';
 const User = withFactory(UserModel);
+```
+
+#### Custom Model Interfaces
+
+When using custom model interfaces with static methods, you need to provide explicit type parameters to preserve all method types:
+
+```typescript
+// ❌ Custom methods not recognized
+interface IProductModel extends mongoose.Model<IProduct> {
+  findByAnyId(id: string): Promise<IProduct | null>;
+  findByCategory(category: string): Promise<IProduct[]>;
+}
+
+const ProductModel = mongoose.model<IProduct, IProductModel>('Product', productSchema);
+const Product = withFactory(ProductModel);              // ❌ Lost custom methods
+
+// ✅ Solution: Explicit type parameters
+const Product = withFactory<IProduct, IProductModel>(ProductModel);
+
+// Now all methods work perfectly:
+const product = Product.factory().build();              // ✅ Factory method
+const byId = await Product.findByAnyId('...');          // ✅ Custom method
+const products = await Product.findByCategory('...');   // ✅ Custom method
+const standard = await Product.findById('...');         // ✅ Standard method
 ```
 
 #### Validation Errors

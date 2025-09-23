@@ -68,6 +68,7 @@ export {
   TimestampDateGenerator,
   BirthDateGenerator,
   FutureDateGenerator,
+  MixedGenerator,
   GeneratorRegistryClass,
   GeneratorFactoryClass,
   globalGeneratorRegistry,

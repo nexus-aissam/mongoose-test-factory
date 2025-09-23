@@ -35,6 +35,7 @@ import {
   BirthDateGenerator,
   FutureDateGenerator,
 } from "./date";
+import { MixedGenerator } from "./mixed";
 
 /**
  * Generator registry implementation
@@ -304,6 +305,9 @@ export class GeneratorRegistry implements IGeneratorRegistry {
     this.register("timestamp", new TimestampDateGenerator());
     this.register("birthdate", new BirthDateGenerator());
     this.register("futuredate", new FutureDateGenerator());
+
+    // Mixed generator
+    this.register("mixed", new MixedGenerator());
 
     console.debug("Registered default generators");
   }
