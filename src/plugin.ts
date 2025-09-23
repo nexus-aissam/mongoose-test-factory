@@ -4,7 +4,7 @@
  * This file contains the main plugin classes and functions.
  */
 
-import { Schema, Model } from "mongoose";
+import { Schema, Model, Document } from "mongoose";
 import {
   PluginOptions,
   PluginManager,
@@ -17,6 +17,7 @@ import {
   FactoryError,
   ModelWithFactory,
 } from "./types/common";
+import { WithFactoryMethod } from "./types/mongoose-augmentation";
 import { FactoryConfig } from "./types/common";
 import { createFactory, FactoryHelpers } from "./factory";
 import { globalGeneratorRegistry } from "./generators/registry";
@@ -681,8 +682,16 @@ export function createModelFactory<T extends BaseDocument>(
  * const std = await User.findById('...');        // ✅ Standard method
  * ```
  */
-export function withFactory(model: any): any {
-  return model;
+export function withFactory<T extends Document, M extends Model<T>>(
+  model: M
+): M & WithFactoryMethod<T>;
+export function withFactory<T extends Document>(
+  model: Model<T>
+): Model<T> & WithFactoryMethod<T>;
+export function withFactory<T extends Document, M extends Model<T>>(
+  model: M
+): M & WithFactoryMethod<T> {
+  return model as M & WithFactoryMethod<T>;
 }
 
 /**

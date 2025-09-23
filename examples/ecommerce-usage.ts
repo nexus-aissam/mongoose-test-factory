@@ -39,17 +39,20 @@ interface IProductModel extends mongoose.Model<IProduct> {
 }
 
 // Add custom static methods to schema
-productSchema.statics.findByAnyId = function(id: string) {
+productSchema.statics.findByAnyId = function (id: string) {
   return this.findById(id);
 };
 
-productSchema.statics.findByCategory = function(category: string) {
+productSchema.statics.findByCategory = function (category: string) {
   return this.find({ category });
 };
 
 // Create the model with factory type assistance
-const ProductModel = mongoose.model<IProduct, IProductModel>("Product", productSchema);
-const Product = withFactory(ProductModel); // Preserves all custom methods + adds factory
+const ProductModel = mongoose.model<IProduct, IProductModel>(
+  "Product",
+  productSchema
+);
+const Product = withFactory<IProduct, IProductModel>(ProductModel); // Preserves all custom methods + adds factory
 
 // Usage examples - these should work without TypeScript errors
 async function examples() {
