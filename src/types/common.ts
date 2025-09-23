@@ -2,7 +2,7 @@
  * Common type definitions used across the mongoose-test-factory plugin
  */
 
-import { Document, Model, Schema, Types } from "mongoose";
+import { Document, Model, Schema } from "mongoose";
 
 /**
  * Generic document type with optional custom properties
@@ -14,7 +14,7 @@ export interface BaseDocument extends Document {
 /**
  * Mongoose model type with factory method
  */
-export interface ModelWithFactory<T extends BaseDocument> extends Model<T> {
+export interface ModelWithFactory<T extends BaseDocument = BaseDocument> extends Model<T> {
   factory(count?: number): FactoryBuilder<T>;
 }
 

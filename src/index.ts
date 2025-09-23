@@ -30,6 +30,9 @@ export type {
   FieldRelationship,
 } from "./types/common";
 
+// Import the mongoose augmentation to enable global type extensions
+import "./types/mongoose-augmentation";
+
 export type {
   FactoryOptions,
   FactoryState,
@@ -67,6 +70,6 @@ export {
 export { SchemaAnalyzer } from "./utils/schema-analyzer";
 export { RelationshipManager } from "./utils/relationship-manager";
 
-import "./types/mongoose-augmentation";
+// Import the mongoose augmentation (already imported above)
 
 export default mongooseTestFactory;

@@ -12,3 +12,4 @@ export * from "./schema";
 export type { GenerationStrategy as StrategyGenerationStrategy } from "./strategy";
 // Exclude TraitDefinition from common to avoid duplicate export
 export * from "./common";
+export * from "./mongoose-augmentation";
