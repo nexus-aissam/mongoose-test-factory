@@ -43,11 +43,11 @@ export interface FactoryOptions {
  * Factory registry entry
  */
 export interface FactoryRegistryEntry<T extends BaseDocument> {
-  model: Model<T, {}, {}, {}, T, any, any>;
+  model: Model<T>;
   schema: Schema;
   config: FactoryConfig<T>;
   builder: new (
-    model: Model<T, {}, {}, {}, T, any, any>,
+    model: Model<T>,
     options?: FactoryOptions
   ) => FactoryBuilder<T>;
 }
@@ -56,7 +56,7 @@ export interface FactoryRegistryEntry<T extends BaseDocument> {
  * Factory state for tracking generation progress
  */
 export interface FactoryState<T extends BaseDocument> {
-  model: Model<T, {}, {}, {}, T, any, any>;
+  model: Model<T>;
   count: number;
   overrides: Partial<T>;
   traits: string[];
@@ -69,7 +69,7 @@ export interface FactoryState<T extends BaseDocument> {
  * Factory method signature
  */
 export type FactoryMethod<T extends BaseDocument> = (
-  this: Model<T, {}, {}, {}, T, any, any>,
+  this: Model<T>,
   count?: number
 ) => FactoryBuilder<T>;
 
@@ -78,7 +78,7 @@ export type FactoryMethod<T extends BaseDocument> = (
  */
 export interface FactoryDefinition<T extends BaseDocument> {
   /** Model to create factory for */
-  model: Model<T, {}, {}, {}, T, any, any>;
+  model: Model<T>;
 
   /** Default field values */
   defaults?: Partial<T>;
@@ -151,21 +151,21 @@ export interface FactoryManager {
    * Get factory for a model
    */
   get<T extends BaseDocument>(
-    model: Model<T, {}, {}, {}, T, any, any>
+    model: Model<T>
   ): FactoryBuilder<T> | undefined;
 
   /**
    * Check if factory exists for model
    */
   has<T extends BaseDocument>(
-    model: Model<T, {}, {}, {}, T, any, any>
+    model: Model<T>
   ): boolean;
 
   /**
    * Remove factory for model
    */
   remove<T extends BaseDocument>(
-    model: Model<T, {}, {}, {}, T, any, any>
+    model: Model<T>
   ): boolean;
 
   /**

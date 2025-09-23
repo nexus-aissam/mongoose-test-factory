@@ -44,7 +44,7 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
    * @param options - Factory configuration options
    */
   constructor(
-    model: Model<T, {}, {}, {}, T, any, any>,
+    model: Model<T>,
     options: FactoryOptions = {},
     config: FactoryConfig<T> = {}
   ) {
@@ -662,7 +662,7 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
    * @returns Generation context
    */
   private createGenerationContext(
-    model: Model<T, {}, {}, {}, T, any, any>,
+    model: Model<T>,
     options: FactoryOptions
   ): GenerationContext<T> {
     return {
@@ -687,7 +687,7 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
  * @returns New factory instance
  */
 export function createFactory<T extends BaseDocument>(
-  model: Model<T, {}, {}, {}, T, any, any>,
+  model: Model<T>,
   options?: FactoryOptions,
   config?: FactoryConfig<T>
 ): FactoryBuilder<T> {
@@ -706,10 +706,10 @@ export const FactoryHelpers = {
    * @returns Factory method
    */
   createFactoryMethod<T extends BaseDocument>(
-    model: Model<T, {}, {}, {}, T, any, any>,
+    model: Model<T>,
     config?: FactoryConfig<T>
   ) {
-    return function (this: Model<T, {}, {}, {}, T, any, any>, count?: number) {
+    return function (this: Model<T>, count?: number) {
       return new Factory(this, count !== undefined ? { count } : {}, config);
     };
   },

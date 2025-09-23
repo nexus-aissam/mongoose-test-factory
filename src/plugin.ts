@@ -190,7 +190,7 @@ class PluginManagerImpl implements PluginManager {
     // Add static factory method
     schema.static("factory", function <
       T extends BaseDocument
-    >(this: Model<T, {}, {}, {}, T, any, any>, count?: number): FactoryBuilder<T> {
+    >(this: Model<T>, count?: number): FactoryBuilder<T> {
       const modelName = this.modelName;
 
       // Register factory creation
@@ -210,7 +210,7 @@ class PluginManagerImpl implements PluginManager {
     schema.method("factory", function <
       T extends BaseDocument
     >(this: T, count?: number): FactoryBuilder<T> {
-      return (this.constructor as Model<T, {}, {}, {}, T, any, any>).factory(
+      return (this.constructor as any).factory(
         count
       );
     });
@@ -414,7 +414,7 @@ export const FactoryPlugin = {
  * Type-safe model factory creation
  */
 export function createModelFactory<T extends BaseDocument>(
-  model: Model<T, {}, {}, {}, T, any, any>,
+  model: Model<T>,
   config?: FactoryConfig<T>
 ): (count?: number) => FactoryBuilder<T> {
   return FactoryHelpers.createFactoryMethod(model, config);

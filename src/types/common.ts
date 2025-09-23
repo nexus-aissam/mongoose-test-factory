@@ -15,7 +15,7 @@ export interface BaseDocument extends Document {
  * Mongoose model type with factory method
  */
 export interface ModelWithFactory<T extends BaseDocument>
-  extends Model<T, {}, {}, {}, T, any, any> {
+  extends Model<T> {
   factory(count?: number): FactoryBuilder<T>;
 }
 
@@ -119,7 +119,7 @@ export interface FieldRelationship {
  */
 export interface GenerationContext<T extends BaseDocument = BaseDocument> {
   schema: Schema;
-  model: Model<T, {}, {}, {}, T, any, any>;
+  model: Model<T>;
   fieldPath: string;
   parentDocument?: any;
   index?: number;
@@ -181,15 +181,7 @@ export type OptionalKeys<T> = {
 /**
  * Type for extracting document type from model
  */
-export type DocumentType<T> = T extends Model<
-  infer U,
-  any,
-  any,
-  any,
-  any,
-  any,
-  any
->
+export type DocumentType<T> = T extends Model<infer U>
   ? U
   : never;
 

@@ -191,7 +191,7 @@ export class RelationshipManager {
    * @returns Referenced documents
    */
   private async getReferencedDocuments(
-    model: Model<any, {}, {}, {}, any, any>,
+    model: Model<any>,
     count: number,
     fieldName: string,
     context: GenerationContext
@@ -241,7 +241,7 @@ export class RelationshipManager {
    * @returns Created documents
    */
   private async createReferencedDocuments(
-    model: Model<any, {}, {}, {}, any, any>,
+    model: Model<any>,
     count: number,
     context: GenerationContext
   ): Promise<any[]> {
@@ -267,7 +267,7 @@ export class RelationshipManager {
    * @param context - Generation context
    * @returns Created document
    */
-  private async createMinimalDocument(model: Model<any, {}, {}, {}, any, any>, context: GenerationContext): Promise<any> {
+  private async createMinimalDocument(model: Model<any>, context: GenerationContext): Promise<any> {
     const schema = model.schema;
     const document: any = {};
 
@@ -334,7 +334,7 @@ export class RelationshipManager {
    * @param context - Generation context
    * @returns Referenced model or undefined
    */
-  private getReferencedModel(modelName: string, context: GenerationContext): Model<any, {}, {}, {}, any, any> | undefined {
+  private getReferencedModel(modelName: string, context: GenerationContext): Model<any> | undefined {
     // Try to get model from mongoose
     try {
       const mongoose = require('mongoose');
