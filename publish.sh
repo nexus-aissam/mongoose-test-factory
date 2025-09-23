@@ -19,7 +19,7 @@ git pull
 
 # Build the package
 echo -e "${BLUE}Building package...${NC}"
-npm run build
+npm run build:prod
 
 if [ $? -ne 0 ]; then
   echo -e "${RED}Build failed. Cannot publish.${NC}"
