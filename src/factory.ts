@@ -524,7 +524,8 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
     // Check for custom generators
     const generator = this.generatorRegistry.getBest(
       fieldAnalysis.type,
-      fieldAnalysis.constraints
+      fieldAnalysis.constraints,
+      fieldAnalysis.factoryType
     );
 
     if (!generator) {
@@ -593,7 +594,8 @@ export class Factory<T extends BaseDocument> implements FactoryBuilder<T> {
     // Check for custom generators
     const generator = this.generatorRegistry.getBest(
       fieldAnalysis.type,
-      fieldAnalysis.constraints
+      fieldAnalysis.constraints,
+      fieldAnalysis.factoryType
     );
 
     if (!generator) {

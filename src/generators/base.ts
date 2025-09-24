@@ -46,6 +46,27 @@ export abstract class AbstractBaseGenerator<T = any>
   abstract generate(context: GenerationContext): T | Promise<T>;
 
   /**
+   * Generate a value synchronously
+   * Default implementation calls generate() and returns synchronously if possible
+   *
+   * @param context - Generation context
+   * @returns Generated value
+   */
+  generateSync(context: GenerationContext): T {
+    const result = this.generate(context);
+
+    // If the result is a promise, we can't handle it synchronously
+    if (result instanceof Promise) {
+      throw new GenerationError(
+        `Generator ${this.constructor.name} does not support synchronous generation`,
+        context.fieldPath || 'unknown'
+      );
+    }
+
+    return result;
+  }
+
+  /**
    * Check if this generator can handle the field type
    * Must be implemented by concrete generators
    *

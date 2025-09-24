@@ -15,6 +15,11 @@ export interface BaseGenerator<T = any> {
   generate(context: GenerationContext): T | Promise<T>;
 
   /**
+   * Generate a value synchronously (fallback for build() method)
+   */
+  generateSync?(context: GenerationContext): T;
+
+  /**
    * Check if this generator can handle the field type
    */
   canHandle(fieldType: FieldType, constraints?: ValidationConstraints): boolean;
