@@ -75,6 +75,47 @@ export class MixedGenerator extends AbstractBaseGenerator<any> {
   }
 
   /**
+   * Generate mixed data synchronously
+   */
+  override generateSync(context: GenerationContext): any {
+    const fieldName = context.fieldPath;
+    const constraints = this.getConstraintsFromContext(context);
+
+    // If there are specific constraints, respect them
+    if (constraints?.enum) {
+      return faker.helpers.arrayElement(constraints.enum);
+    }
+
+    // Generate based on field name patterns
+    if (fieldName) {
+      const lowerFieldName = fieldName.toLowerCase();
+
+      // Common metadata patterns
+      if (lowerFieldName.includes('metadata') || lowerFieldName.includes('meta')) {
+        return this.generateMetadata();
+      }
+
+      // Settings/config patterns
+      if (lowerFieldName.includes('settings') || lowerFieldName.includes('config')) {
+        return this.generateSettings();
+      }
+
+      // Attributes/properties patterns
+      if (lowerFieldName.includes('attributes') || lowerFieldName.includes('props')) {
+        return this.generateAttributes();
+      }
+
+      // Content patterns
+      if (lowerFieldName.includes('content') || lowerFieldName.includes('data')) {
+        return this.generateContent();
+      }
+    }
+
+    // Default: generate a random mixed value
+    return this.generateRandomMixed();
+  }
+
+  /**
    * Generate metadata object
    */
   private generateMetadata(): any {

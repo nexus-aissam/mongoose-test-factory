@@ -120,6 +120,92 @@ export class ArrayGenerator extends AbstractBaseGenerator<any[]> {
   }
 
   /**
+   * Generate array data synchronously
+   */
+  override generateSync(context: GenerationContext): any[] {
+    const fieldName = context.fieldPath;
+    const constraints = this.getConstraintsFromContext(context);
+
+    // If there are specific constraints, respect them
+    if (constraints?.enum) {
+      return faker.helpers.arrayElements(constraints.enum, {
+        min: 1,
+        max: Math.min(constraints.enum.length, 5)
+      });
+    }
+
+    // Generate based on field name patterns
+    if (fieldName) {
+      const lowerFieldName = fieldName.toLowerCase();
+
+      // Tags/categories patterns
+      if (lowerFieldName.includes('tag') || lowerFieldName.includes('label')) {
+        return this.generateTags();
+      }
+
+      // Skills/abilities patterns
+      if (lowerFieldName.includes('skill') || lowerFieldName.includes('abilit')) {
+        return this.generateSkills();
+      }
+
+      // Email/phone arrays
+      if (lowerFieldName.includes('email')) {
+        return this.generateEmails();
+      }
+
+      if (lowerFieldName.includes('phone')) {
+        return this.generatePhones();
+      }
+
+      // URL/link arrays
+      if (lowerFieldName.includes('url') || lowerFieldName.includes('link')) {
+        return this.generateUrls();
+      }
+
+      // Name arrays (authors, contributors, etc.)
+      if (lowerFieldName.includes('name') || lowerFieldName.includes('author') ||
+          lowerFieldName.includes('contributor')) {
+        return this.generateNames();
+      }
+
+      // Category/type arrays
+      if (lowerFieldName.includes('categor') || lowerFieldName.includes('type')) {
+        return this.generateCategories();
+      }
+
+      // Role/permission arrays
+      if (lowerFieldName.includes('role') || lowerFieldName.includes('permission')) {
+        return this.generateRoles();
+      }
+
+      // Language arrays
+      if (lowerFieldName.includes('language') || lowerFieldName.includes('locale')) {
+        return this.generateLanguages();
+      }
+
+      // Image/file arrays
+      if (lowerFieldName.includes('image') || lowerFieldName.includes('file') ||
+          lowerFieldName.includes('photo')) {
+        return this.generateImageUrls();
+      }
+
+      // Comment/review arrays
+      if (lowerFieldName.includes('comment') || lowerFieldName.includes('review')) {
+        return this.generateComments();
+      }
+
+      // Number arrays (scores, ratings, etc.)
+      if (lowerFieldName.includes('score') || lowerFieldName.includes('rating') ||
+          lowerFieldName.includes('price')) {
+        return this.generateNumbers();
+      }
+    }
+
+    // Default: generate a mixed array
+    return this.generateMixedArray();
+  }
+
+  /**
    * Generate tag array
    */
   private generateTags(): string[] {

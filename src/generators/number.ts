@@ -100,6 +100,28 @@ export class MongooseNumberGenerator
     );
   }
 
+  override generateSync(context: GenerationContext): number {
+    const fieldName = context.fieldPath;
+    const constraints = this.getConstraintsFromContext(context);
+
+    // Try semantic-based generation first
+    const semanticValue = this.generateBySemantic(fieldName, context);
+    if (semanticValue !== null) {
+      return this.applyConstraints(semanticValue, constraints);
+    }
+
+    // Try constraint-based generation
+    if (constraints) {
+      return this.generateByConstraints(constraints, context);
+    }
+
+    // Fallback to default range
+    return this.generateInteger(
+      this.getOption("defaultMin", 0),
+      this.getOption("defaultMax", 100)
+    );
+  }
+
   /**
    * Generate integer within range
    */
@@ -521,6 +543,10 @@ export class PriceNumberGenerator extends MongooseNumberGenerator {
   override async generate(context: GenerationContext): Promise<number> {
     return parseFloat(faker.commerce.price({ min: 1, max: 1000, dec: 2 }));
   }
+
+  override generateSync(context: GenerationContext): number {
+    return parseFloat(faker.commerce.price({ min: 1, max: 1000, dec: 2 }));
+  }
 }
 
 export class AgeNumberGenerator extends MongooseNumberGenerator {
@@ -540,6 +566,10 @@ export class AgeNumberGenerator extends MongooseNumberGenerator {
   }
 
   override async generate(context: GenerationContext): Promise<number> {
+    return faker.number.int({ min: 18, max: 80 });
+  }
+
+  override generateSync(context: GenerationContext): number {
     return faker.number.int({ min: 18, max: 80 });
   }
 }
@@ -562,6 +592,10 @@ export class RatingNumberGenerator extends MongooseNumberGenerator {
   }
 
   override async generate(context: GenerationContext): Promise<number> {
+    return faker.number.float({ min: 1, max: 5, fractionDigits: 1 });
+  }
+
+  override generateSync(context: GenerationContext): number {
     return faker.number.float({ min: 1, max: 5, fractionDigits: 1 });
   }
 }

@@ -42,6 +42,14 @@ export class ObjectIdGenerator extends AbstractBaseGenerator<string> {
   }
 
   /**
+   * Generate ObjectId data synchronously
+   */
+  override generateSync(_context: GenerationContext): string {
+    // Generate a valid MongoDB ObjectId
+    return this.generateObjectId();
+  }
+
+  /**
    * Generate a valid MongoDB ObjectId
    */
   private generateObjectId(): string {

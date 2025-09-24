@@ -106,6 +106,28 @@ export class MongooseDateGenerator
   }
 
   /**
+   * Generate date value synchronously
+   */
+  override generateSync(context: GenerationContext): Date {
+    const fieldName = context.fieldPath;
+    const constraints = this.getConstraintsFromContext(context);
+
+    // Try semantic-based generation first
+    const semanticDate = this.generateBySemantic(fieldName, context);
+    if (semanticDate) {
+      return this.applyConstraints(semanticDate, constraints);
+    }
+
+    // Try constraint-based generation
+    if (constraints?.min || constraints?.max) {
+      return this.generateByConstraints(constraints, context);
+    }
+
+    // Fallback to recent date
+    return this.generateRecent();
+  }
+
+  /**
    * Generate date within range
    */
   generateInRange(start?: Date, end?: Date, context?: GenerationContext): Date {
@@ -500,6 +522,10 @@ export class TimestampDateGenerator extends MongooseDateGenerator {
   override async generate(context: GenerationContext): Promise<Date> {
     return faker.date.recent({ days: 30 });
   }
+
+  override generateSync(context: GenerationContext): Date {
+    return faker.date.recent({ days: 30 });
+  }
 }
 
 export class BirthDateGenerator extends MongooseDateGenerator {
@@ -522,6 +548,10 @@ export class BirthDateGenerator extends MongooseDateGenerator {
   override async generate(context: GenerationContext): Promise<Date> {
     return faker.date.birthdate({ min: 18, max: 80, mode: "age" });
   }
+
+  override generateSync(context: GenerationContext): Date {
+    return faker.date.birthdate({ min: 18, max: 80, mode: "age" });
+  }
 }
 
 export class FutureDateGenerator extends MongooseDateGenerator {
@@ -542,6 +572,10 @@ export class FutureDateGenerator extends MongooseDateGenerator {
   }
 
   override async generate(context: GenerationContext): Promise<Date> {
+    return faker.date.future({ years: 2 });
+  }
+
+  override generateSync(context: GenerationContext): Date {
     return faker.date.future({ years: 2 });
   }
 }

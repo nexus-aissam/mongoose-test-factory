@@ -106,6 +106,36 @@ export class MongooseStringGenerator
     return this.generateGenericString(constraints);
   }
 
+  override generateSync(context: GenerationContext): string {
+    const fieldName = context.fieldPath;
+    const constraints = this.getConstraintsFromContext(context);
+
+    // Try pattern-based generation first
+    const patternValue = this.generateByPattern(fieldName, context);
+    if (patternValue) {
+      return this.applyConstraints(patternValue, constraints);
+    }
+
+    // Try semantic-based generation
+    const semanticValue = this.generateBySemantic(fieldName, context);
+    if (semanticValue) {
+      return this.applyConstraints(semanticValue, constraints);
+    }
+
+    // Try enum values
+    if (constraints?.enum && constraints.enum.length > 0) {
+      return this.generateFromEnum(constraints.enum, context);
+    }
+
+    // Try regex pattern
+    if (constraints?.match) {
+      return this.generateByRegex(constraints.match, context);
+    }
+
+    // Fallback to generic string
+    return this.generateGenericString(constraints);
+  }
+
   /**
    * Generate string based on field name patterns
    */
@@ -407,6 +437,10 @@ export class EmailStringGenerator extends MongooseStringGenerator {
   override async generate(context: GenerationContext): Promise<string> {
     return faker.internet.email();
   }
+
+  override generateSync(context: GenerationContext): string {
+    return faker.internet.email();
+  }
 }
 
 export class PasswordStringGenerator extends MongooseStringGenerator {
@@ -433,6 +467,14 @@ export class PasswordStringGenerator extends MongooseStringGenerator {
       pattern: /[A-Za-z0-9!@#$%^&*]/,
     });
   }
+
+  override generateSync(context: GenerationContext): string {
+    return faker.internet.password({
+      length: 12,
+      memorable: false,
+      pattern: /[A-Za-z0-9!@#$%^&*]/,
+    });
+  }
 }
 
 export class SlugStringGenerator extends MongooseStringGenerator {
@@ -452,6 +494,10 @@ export class SlugStringGenerator extends MongooseStringGenerator {
   }
 
   override async generate(context: GenerationContext): Promise<string> {
+    return faker.helpers.slugify(faker.lorem.words(3));
+  }
+
+  override generateSync(context: GenerationContext): string {
     return faker.helpers.slugify(faker.lorem.words(3));
   }
 }
